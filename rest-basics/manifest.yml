@@ -1,0 +1,11 @@
+---
+applications:
+- name: bootiful-rest-basics
+  memory: 512M
+  instances: 1
+  host: bootiful-rest-basics-${random-word}
+  path: target/bootiful-rest-basics.jar
+  env:
+    SPRING_PROFILES_ACTIVE: cloud
+    DEBUG: "true"
+    debug: "true"
