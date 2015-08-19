@@ -90,6 +90,7 @@ public class HypermediaApiDocumentation {
                 .andDo(document("customers-list-example")
                         .withResponseFields(
                                 fieldWithPath("_links.self.href").description("A link to the Customers"),
+                                fieldWithPath("_links.self.templated").description("is the URI templated"),
                                 fieldWithPath("_embedded.customerList").description("An array of <<resources-customer, Customer resources>>")));
     }
 
