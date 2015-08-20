@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>ee</artifactId>
-
+         <!-- tidy-->
     <properties>
         <start-class>demo.Application</start-class>
     </properties>
