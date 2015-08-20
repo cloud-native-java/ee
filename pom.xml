@@ -10,7 +10,6 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-<!-- now is th time -->
     <artifactId>ee</artifactId>
 
     <properties>
