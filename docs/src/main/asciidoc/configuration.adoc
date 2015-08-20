@@ -1,0 +1,254 @@
+
+include::variables.txt[]
+
+:12FC: Twelve-Factor-style configuration
+
+==  12-Factor Application Style Configuration
+
+
+=== The Confusing Conflation of "Configuration"
+Let's establish some vocabulary. When we talk about _configuration_ in Spring, we've _usually_ talked about the inputs into the Spring framework's various http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/context/ApplicationContext.html[`ApplicationContext`] implementations that help the container understand how you want beans wired together. This might be an XML file to be fed into a http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/context/support/ClassPathXmlApplicationContext.html[`ClassPathXmlApplicationContext`], or Java classes annotated a certain way to be fed into an http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/context/annotation/AnnotationConfigApplicationContext.html[`AnnotationConfigApplicationContext`]. Indeed, when we talk about the  latter, we refer to it as _Java configuration_.
+
+In this chapter, however, we're going to look at configuration as it is defined in http://12factor.net/config[12-Factor app style configuration page]. Such configuration avoids constants embedded in the code. The page provides a great litmus test for whether configuration has been done correctly: could the codebase of an application be open-sourced at any moment without exposing and compromising important credentials? This sort of configuration refers only to the values that change from one environment to another, not - for example - to Spring bean wiring or Ruby route configuration.
+
+=== Support in Spring framework
+Spring has supported {12FC} since the   http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/beans/factory/config/PropertyPlaceholderConfigurer.html[`PropertyPlaceholderConfigurer`] class was introduced. Once an instance is defined, it replaces literals in the XML configuration with values that it resolved in a `.properties` file. Spring's offered the  {spring-api-root}/org/springframework/beans/factory/config/PropertyPlaceholderConfigurer.html[`PropertyPlaceholderConfigurer`] since 2003. Spring 2.5 introduced XML namespace support and with it XML namespace support for property placeholder resolution.  This lets  us substitute bean definition literal values in the XML configuration for values assigned to keys in a (external) property file (in this case `simple.properties` which may be on the class path or external to the application).
+
+{12FC} aims to eliminate the fragility of having _magic strings_ - values like database locators and credentials, ports, etc. - hard-coded in the compiled application. If configuration is externalized, then it can be replaced without requiring a rebuild of the code.
+
+==== The `PropertyPlaceholderConfigurer`
+Let's look at an example using the `PropertyPlaceholderConfigurer`, Spring XML bean definitions, and an externalized `.properties` file. We simply want to print out the value in the property file, which looks like this:
+
+.A property file - `some.properties`
+[source,properties,indent=0]
+----
+include::{book-root}/configuration/configuration-basics/src/main/resources/some.properties[]
+----
+
+This is a Spring `ClassPathXmlApplicationContext` so we use the Spring
+`context` XML namespace and point it to our `some.properties` file. Then, in the bean definitions, use literals of the form `${configuration.projectName}` and Spring will replace them at runtime with the values from our property file.
+
+.A Spring XML configuration file
+[source,xml,indent=0]
+-----
+include::{book-root}/configuration/configuration-basics/src/main/resources/classic.xml[tags=property-placeholder]
+-----
+<1> A `classpath:` location refers to a file in the current compiled code unit (`.jar`, `.war`, etc.). Spring supports many alternatives, including `file:` and `url:`, that would let the file live external to the compiled unit.
+
+Finally, here's a Java class to pull it all together:
+
+.A Java class that is to be configured with the property value
+[source,java,indent=0]
+-----
+include::{book-root}/configuration/configuration-basics/src/main/java/classic/Application.java[]
+-----
+
+The first examples used Spring's XML bean configuration format. Spring 3.0 and 3.1 improved things considerably for developers using Java configuration. These releases saw the introduction of the `@Value` annotation and the `Environment` abstraction.
+
+==== The `Environment` Abstraction and `@Value`
+The http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/core/env/Environment.html[`Environment`] abstraction provides a bit of runtime indirection between the running application and the environment in which it is running and lets the application ask questions ("what's the current platform's `line.separator`?") about the environment. The `Environment` acts as a map of keys and values. You can configure where those values are read from by contributing a `PropertySource`. By default Spring loads up system environment keys and values, like `line.separator`. You can tell Spring to load up configuration keys from a file, specifically, using the `@PropertySource` annotation.
+
+
+The `@Value` annotation provides a way to inject values into fields. These values can be computed using the Spring Expression Language or using property placeholder syntax, assuming one registers a {spring-api-root}/org/springframework/context/support/PropertySourcesPlaceholderConfigurer.html[PropertySourcesPlaceholderConfigurer].
+
+[source,java,indent=0]
+----
+include::{book-root}/configuration/configuration-basics/src/main/java/env/Application.java[]
+----
+<1> the `@PropertySource` annotation is a shortcut, like `property-placeholder`, that configures a `PropertySource` from a `.properties` file.
+<2> you need to register the `PropertySourcesPlaceholderConfigurer` as a `static` bean because it is a `BeanFactoryPostProcessor` and must be invoked earlier in the Spring bean initialization lifecycle. This nuance is invisible when you're using Spring's XML bean configuration format.
+<3> you can decorate fields with the `@Value` annotation..
+<4> ..or you can decorate fields with the `@Value` annotation.
+<5> `@Value` annotations can be declared on Spring Java configuration `@Bean` provider method arguments, as well.
+
+This example loads up the values from a file, `simple.properties`, and then has one value, `configuration.projectName`, injected using the `@Value` annotation and then read again from Spring's `Environment` abstraction in various ways. To be able to inject the values with the `@Value` annotation, we need to register a http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/context/support/PropertySourcesPlaceholderConfigurer.html[`PropertySourcesPlaceholderConfigurer`].
+
+
+==== Profiles
+The `Environment` also brings the idea of http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/context/annotation/Profile.html[_profiles_]. It lets you ascribe labels (profiles) to groupings of beans. Use profiles to describe beans and bean graphs that change from one environment to another. You can activate one or more profiles at a time. Beans that do not have a profile assigned to them are always activated. Beans that have the profile `default` are activated only when there are no other profiles are active. You can specify the `profile` attribute in bean definitions in XML or alternatively tag classes configuration classes, individual beans, or `@Bean`-provider methods with `@Profile`.
+
+Profiles let you describe sets of beans  that need to be created differently in one environment versus another. You might, for example, use an embedded H2 `javax.sql.DataSource` in your local `dev` profile, but then switch to a `javax.sql.DataSource` for PostgreSQL that's resolved through a JNDI lookup or by reading the properties from an environment variable in http://cloudfoundry.org[Cloud Foundry] when the `prod` profile is active. In both cases, your code works: you get a `javax.sql.DataSource`, but the decision about _which_ specialized instance is used is decided by the active profile or profiles.
+
+.The example demonstrates that `@Configuration` classes can load different configurations files and contribute different beans based on the active profile.
+[source,java,indent=0]
+----
+include::{book-root}/configuration/configuration-basics/src/main/java/profiles/Application.java[]
+----
+<1>  this configuration class and all the `@Bean` definitions therein will only be evaluated if the `prod` profile is active.
+<2>  this configuration class and all the `@Bean` definitions therein will only be evaluated if the `dev` profile _or_ *no* profile  - including `dev` - is active.
+<3>  this `InitializingBean` simply records the currently active profile and injects the value that was ultimately contributed by the property file.
+<4>  it's easy to programmatically activate a profile (or profiles).
+
+Spring responds to a few other methods for activating profiles using the token `spring_profiles_active` or `spring.profiles.active`. You can set the profile using an environment variable  (e.g.: `SPRING_PROFILES_ACTIVE`), a JVM property (`-Dspring.profiles.active=..`), a Servlet application initialization parameter, or programmatically.
+
+=== _Bootiful_ Configuration
+
+http://spring.io/projects/spring-boot[Spring Boot] improves things considerably. Spring Boot will automatically load properties in a hierarchy of well-known places   by default. The command-line arguments override property values contributed from JNDI, which override properties contributed from `System.getProperties()`, etc.
+
+- Command line arguments
+- JNDI attributes from `java:comp/env`
+- `System.getProperties()`` properties
+- OS environment variables
+- External property files on filesystem - `(config/)?application.(yml.properties)`
+- Internal property files in archive `(config/)?application.(yml.properties)`
+- `@PropertySource` annotation on configuration classes
+- Default properties from `SpringApplication.getDefaultProperties()`
+
+http://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-profiles.html[If a profile is active], it will also automatically reads in the configuration files based on the profile name, like `src/main/resources/application-foo.properties` where `foo` is the current profile.
+
+If the https://code.google.com/p/snakeyaml/[Snake YML library] is on the classpath, then it will also automatically load YML files following basically the same convention. Yeah, read that part again. YML is so good, and so worth a go! Here's an example YML file:
+
+.A `application.yml` property file. Data is hierarchical.
+[source,yaml,indent=0]
+----
+include::{book-root}/configuration/configuration-basics/src/main/resources/application.yml[]
+----
+
+Spring Boot also makes it much simpler to get the right result in common cases. It makes `-D` arguments to the `java` process and environment variables available as properties. It even normalizes them, so an environment variable `$CONFIGURATION_PROJECTNAME` or a `-D` argument of the form `-Dconfiguration.projectname` both become accessible with the key `configuration.projectName` in the same way that the `spring_profiles_active` token was earlier.
+
+Configuration values are strings, and if you have enough configuration values it can be unwieldy trying to make sure those keys don't themselves become magic strings in the code. Spring Boot introduces a `@ConfigurationProperties` component type. Annotate a POJO with `@ConfigurationProperties` and specify a prefix, and Spring will attempt to map all properties that start with that prefix to the POJO's properties. In the example below the value for `configuration.projectName` will be mapped to an instance of the POJO that all code can then inject and dereference to read the (type-safe) values. In this way, you only have the mapping from a key in one place.
+
+.In the example below, properties will be resolved automatically from `src/main/resources/application.yml`.
+[source,java,indent=0]
+----
+include::{book-root}/configuration/configuration-basics/src/main/java/boot/Application.java[]
+----
+<1> the `@EnableConfigurationProperties` annotation tells Spring to map properties to POJOs annotated with `@ConfigurationProperties`.
+<2> `@ConfigurationProperties` tells Spring that this bean is to be used as the root for all properties starting with `configuration.`, with subsequent tokens mapped to properties on the object.
+<3> the `projectName` field would ultimately have the value assigned to the property key `configuration.projectName`.
+
+Spring Boot uses the `@ConfigurationProps` mechanism heavily to let users override bits of the system. You can see what property keys can be used to change things, for example, by adding the `org.springframework.boot:spring-boot-starter-actuator` dependency to a Spring Boot-based web application and then visiting `http://127.0.0.1:8080/configprops`. This will give you a list of supported configuration properties based on the types present on the classpath at runtime. As you add more Spring Boot types, you'll see more properties. This endpoint will _also_ reflect the properties exported by your `@ConfigurationProperties`-annotated POJO.
+
+=== Centralized, Journaled Configuration with the Spring Cloud Configuration Server
+
+So far so good, but there are gaps in the approach so far:
+
+* changes to an application's configuration require restarts
+* there is no traceability: how do we determine what changes were introduced into production and, if necessary, roll back?
+* configuration is de-centralized and it's not immediately apparent where to go to change what.
+* sometimes configuration values should be encrypted and decrypted for security. There is no out-of-the-box support for this.
+
+http://projects.spring.io/spring-cloud/spring-cloud.html[Spring Cloud], which builds upon Spring Boot and integrates various tools and libraries for working with microservices, including https://github.com/netflix[the Netflix OSS stack], offers a http://cloud.spring.io/spring-cloud-config/[configuration server] and a client for that configuration server. This support, taken together, address these last three concerns.
+
+Let's look at a simple example. First, we'll setup a configuration server. The configuration server is something to be shared among a set of applications or microservices based on Spring Cloud. You have to get it running, somewhere, once. Then, all other services need only know where to find the configuration service. The configuration service acts as a sort of proxy for configuration keys and values that it reads from a Git repository online or on a disk.
+
+TIP: Add the Spring Cloud Config server dependency: `org.springframework.cloud` :  `spring-cloud-config-server`
+
+[source,java,indent=0]
+----
+include::{book-root}/configuration/configuration-server/src/main/java/demo/Application.java[]
+----
+<1> `@EnableConfigServer` installs a configuration service.
+
+Here's the configuration for the configuration service:
+
+.The configuration server's configuration,  `src/main/resources/application.yml`.
+[source,yaml]
+----
+include::{book-root}/configuration/configuration-server/src/main/resources/application.yml[]
+----
+<1> This is a normal Spring Boot-ism that configures on which port the embedded web server (in this Apache Tomcat) is to use.
+<2> Points to the working Git repository, either local or over the network (like   http://github.com[GitHub]), that the Spring Cloud Config server is to use.
+
+This tells the Spring Cloud configuration service to look for configuration files for individual client services in the Git repository on my GitHub account. The URI could, of course, just as easily have been a Git repository on my local file system. The value used for the URI could also have been a property reference, of the form, `${SOME_URI}`, that references - perhaps - an environment variable called `SOME_URI`.
+
+Run the application and you'll be able to verify that your configuration service is working by pointing your browser at `http://localhost:8888/SERVICE/master` where `SERVICE` is the ID taken from your client service's `boostrap.yml`. Spring Cloud-based services look for a file called `src/main/resources/bootstrap.(properties,yml)` that it expects to find to - you guessed it! - bootstrap the service. One of the things it expects to find in the `bootstrap.yml` file is the ID of the service specified as a property, `spring.application.name`.
+
+.The output of the Spring Coud Config Server confirming that it _sees_ the configuration in our Git repository
+image::{images}/configuration-config-server-json.png[the Config Server JSON output]
+
+If you manage things correctly, then the only configuration that lives with any of your services should be the configuration that tells the configuration service where to find the Git repository and the configuration that tells the other client services where to find the configuration service, both of which usually live in a file called `boostrap.yml` in Spring Cloud-based services. This file (or `bootstrap.properties`) gets loaded than other property files (including `application.yml` or `application.properties`). It makes sense: this file tells Spring where it's to find the rest of the application's configuration. Here's our configuration client's `bootstrap.yml`.
+
+.`bootstrap.yml` example.
+
+[source,yaml]
+----
+include::{book-root}/configuration/configuration-client/src/main/resources/bootstrap.yml[]
+----
+
+
+When a Spring Cloud microservice runs, it'll see that its `spring.application.name` is `config-client`. It will contact the configuration service (which we've told Spring Cloud is running at `http://localhosst:8080`, though this too could've been an environment variable) and ask it for any configuration. The configuration service returns back JSON that contains all the configuration values in the `application.(properties,yml)` file as well as any service-specific configuration in `config-client.(yml,properties)`. It will _also_ load any configuration for a given service _and_ a specific profile, e.g., `config-client-dev.properties`.
+
+This all just happens automatically and you can interact with properties exposed via the configuration server like any other configuration property.
+
+[source,java,indent=0]
+----
+include::{book-root}/configuration/configuration-client/src/main/java/demo/Application.java[]
+----
+
+==== Security
+
+Define `spring.cloud.config.server.git.username` and `spring.cloud.config.server.git.password` properties for the Spring Cloud Config Server to talk to secured Git repositories.
+
+You can protect the Spring Cloud Configuration Server itself with HTTP BASIC authentication. The easiest is to just include `org.springframework.boot`: `spring-boot-starter-security` and then define a `security.user.name` and a `security.user.password` property.
+
+The Spring Cloud Config Clients can encode the user and password in the `spring.cloud.config.uri` value, e.g.: `https://user:secret@host.com`.
+
+
+////
+ TODO : show how to change properties using the /env/* endpoints and POST commands. Does this translate into a change in the backing configuration files.
+////
+
+
+=== Refreshable Configuration
+
+Centralized configuration is a powerful thing, but changes to configuration aren't immediately visible to the beans that depend on it. Spring Cloud's _refresh_ scope offers a solution.
+
+The `ProjectNameRestController` is annotated with link:http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_refresh_scope[`@RefreshScope`], a Spring Cloud scope that lets any bean recreate itself (and re-read configuration values from the configuration service) in-place. In this case, the `ProjectNameRestController` will be recreated - its lifecycle callbacks honored and `@Value` and `@Autowired` injects re-established - whenever a  __refresh__ is triggered.
+
+Fundamentlaly, all _refresh_-scoped beans will refresh themselves when they receive a Spring `ApplicationContext`-event of the type `RefreshScopeRefreshedEvent`.  There are various ways to trigger the refresh.
+
+You can trigger the refresh by sending an empty `POST` request to `http://127.0.0.1:8080/refresh`, which is a Spring Boot Actuator endpoint that is exposed automatically. Here's how to do that using `curl`:
+
+```sh
+curl -d{} http://127.0.0.1:8080/refresh`
+```
+
+Alternatively, you can use the auto-exposed Spring Boot Actuator JMX `refresh` endpoint.
+
+.Using `jconsole` to  activate the `refresh` (or `refreshAll`) Actuator endpoints
+image::{images}/configuration-config-client-jmx.png[Using `jconsole` to  activate the `refresh` (or `refreshAll`) Actuator endpoints]
+
+To see all this in action, make changes to the configuration file in Git, and at the very least `git commit` them. Then invoke the REST endpoint or the JMX endpoint on the node you want to see the configuration changed in, _not_ the configuration server.
+
+Both of those Spring Boot Actuator endpoints work on an `ApplicationContext`-by-`ApplicationContext` basis. The Spring Cloud Bus, on the other hand, provides a simple way to refresh multiple `ApplicationContext`'s (e.g.: many nodes) in one go.
+
+The http://cloud.spring.io/spring-cloud-bus/[Spring Cloud Bus] links all services through a RabbitMQ powered-bus. This is particularly powerful. You can tell one (or thousands!) of microservices to refresh themselves by sending a single message to a message bus. This prevents downtime and is _much_ more friendly than having to systematically restart individual services or nodes.
+
+TIP: Add the Spring Cloud Event Bus dependency `org.springframework.cloud` : `spring-cloud-starter-bus-amqp`.
+
+By default Spring Boot's auto-configuration for RabbitMQ will attempt to connect to a local RabbitMQ instance. You can configure the specific host and port in the usual way in your application's `application.yml`. These specifics tend to apply to multiple services, so you might consider putting them in the `application.yml` in your configuration server's Git repository. This way, _all_ services that connect to the configuration service will _also_ talk to the right RabbitMQ instance.
+
+.Specifying a RabbitMQ `ConnectionFactory`.
+[source,yaml]
+----
+spring:
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: user
+    password: secret
+----
+
+These configuration values create a Spring AMQP `ConnectionFactory` bean that will be used to listen for event bus messages. If you have multiple `ConnectionFactory` instances in the Spring application context, you need to __qualify__ which instance is to be used with the `@BusConnectionFactory` annotation. Qualify any other instance to be used for regular, non-bus business processing with the usual Spring qualifier annotation, `@Primary`.
+
+The Spring Cloud Event Bus exposes a _different_ Actuator endpoint, `/bus/refresh`, that will publish a message to the connected RabbitMQ broker that will trigger __all__ connected nodes to refresh themselves. You can send the following message to _any_ node with the `spring-cloud-starter-bus-amqp` auto-configuration, and it'll trigger a refresh in __all__ the connected nodes.
+
+```sh
+curl -d{} http://127.0.0.1:8080/bus/refresh`
+```
+
+
+////
+TODO:
+The Spring Cloud configuration support _also_ http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_security_2[includes first-class support for security and encryption]. I'll leave you to explore that last mile on your own, but it's fairly trivial and amounts to configuring a valid key.
+////
+
+=== Next Steps
+
+We've covered a _lot_ here! Armed with all of this, it should be easy to package one artifact and then move that artifact from one environment to another without changes to the artifact itself. If you're going to start an application today, I'd recommend starting on Spring Boot and Spring Cloud, especially now that we've looked at all the good stuff it brings you by default. Don't forget https://github.com/joshlong/configuring-it-all-out[to check out the code] behind all of these examples.
+
+////
+TODO:
+ - show security for the Spring Cloud configuration service
+////

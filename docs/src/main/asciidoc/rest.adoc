@@ -1,0 +1,106 @@
+// this chapter is heavily influence by the blog of the same name
+// https://spring.io/blog/2015/01/13/configuring-it-all-out-or-12-factor-app-style-configuration-with-spring
+// I also wrote that blog.
+
+include::variables.txt[]
+
+:12FC: Twelve-Factor-style configuration
+
+== Building APIs with REST
+
+Amazon.com famously decreed that all services should be exposed as APIs, and that no state should be shared at the database tier. This is an important first step in making the move to microservices: everything is an API. Representational State Transfer (REST) is far and away the most popular protocol of the web's millions of APIs.
+
+REST was originally advanced by Dr. Roy Fielding as part of his doctoral dissertation in 2001. Fielding helped define the HTTP 1.1 specification and wanted to help illustrate how the web - an already proven, massively scalable, decentralized, failure resistant fabric - could be used to build services. HTTP, you see, is an _existence proof_ of the REST architecture's merits.
+
+Where previous approaches to distributed services (like CORBA, EJB, RMI, and SOAP) focused more or less on exposing an object-oriented interface and methods as a remotely accessible service, REST instead focuses on the manipulation of remote  _resources_ or entities. Nouns, not verbs.
+
+REST is all about exposing the mutations of business state with the verbs (`GET`, `PUT`, `POST`, `DELETE`, etc.) and idioms (HTTP headers, status codes, etc.) that HTTP already gives us to support service-to-service communication. The best REST APIs tend to exploit more of HTTP's capabilities. REST, for all of its benefits, is a architectural constraint on HTTP, not any sort of _standard_, and so we've seen a proliferation of APIs of varying degrees of compliance with RESTful principles. To counter this, Dr. Leonard Richardson put forth his http://martinfowler.com/articles/richardsonMaturityModel.html[_maturity model_] to qualify how RESTful an API is.
+
+=== Richardson's Maturity Model
+
+*Level 0 - the Swamp of POX* (naturally, it _would_ be zero-indexed!)  describes APIs that use HTTP as a transport and nothing more. SOAP-based web services, for example, use HTTP, but they _could_ as easily use JMS. These are incidentally HTTP-based. Such a service uses HTTP mainly as a tunnel through one URI . SOAP and XML-RPC are examples. They usually use only one HTTP verb.
+
+*Level 1 - Resources* describes APIs that use multiple URIs to distinguish related nouns.
+
+*Level 2 - HTTP verbs* describes APIs that leverage transport native properties (like HTTP verbs and status codes) to enhance the service. If you do everything wrong with Spring MVC, or even JAX-RS, you'll _still_ probably end up with an API that's level 2 compliant!
+
+*Level 3 - Hypermedia Controls (HATEOAS)* describes APIs require no _a priori_ knowledge of a service in order to navigate it. Such a service promotes longevity through a uniform interface for interrogating a service's structure.
+
+In this chapter, we'll look at how to use Spring to build REST services, starting at level 2. Later, we'll look at how to use hypermedia to promote uniform, self-describing and self-discovering services.
+
+REST is an important part of a cloud-native application. While nothing about microservices stipulates or even requires REST, it is the most common approach to expose services.
+
+HTTP lends itself to cloud-native applications. A modern Platform-as-a-Service (PaaS), such as Cloud Foundry, is specifically HTTP-aware, though it may not be TCP/UDP-aware. HTTP-based services are inherently stateless and this quality makes it very easy to scale simply by adding more nodes. This is achieved with any of a number of HTTP centric middleware and routers from the last three decades. HTTP is an ideal fit for service caching because it has no client-side state. Instead, each request is self-contained.
+
+Caching reduces time-to-first-byte times. HTTP is content-type agnostic and includes support for content-negotiation; one client may support only XML, another JSON or Google's Protocol Buffers. All may be served by the same services. This mechanism is extensible, too. You can squeeze a lot of performance out of individual HTTP requests with caching, GZip compression and - with HTTP 2 on the horizon - this situation looks to improve considerably in the near term.
+
+=== REST clients
+
+We'll talk about consuming and testing REST services later in the chapter. It is easy to test REST services with any number of free, powerful tools. Here are some favorites:
+
+*Firefox's Poster plugin* - this freely available Firefox plugin is a handy little utility that lives in the bottom right corner of the browser as a little yellow icon. Click it and you'll be presented with a dialog where you can describe and execute HTTP requests. It provides easy features for handling things like file uploads, and content-negotiation.
+
+.the Firefox Poster plugin provides a lot of bang for the buck
+image::{images}/rest-firefox-poster.jpg[the Firefox Poster plugin in action]
+
+*`curl`* - the venerable `curl` command is a command line utility that supports any manner of HTTP requests with convenient options for sending HTTP headers, custom request bodies, and more.
+
+.A script that uses `curl`
+image::{images}/rest-curl.jpg[the venerable `curl` command line utility]
+
+*The Google Chrome Advanced HTTP Client Extension* this handy extension is my goto for HTTP exercises. It lets you describe and execute HTTP requests _and_ save their configuration for later reuse.
+
+.The Google Chrome Advanced HTTP Client
+image::{images}/rest-chrome-httpclient.jpg[using the Google Chrome Advanced HTTP Client plugin]
+
+The Advanced HTTP Client integrates nicely with the rest of the Google Chrome developer tools. You can open up the Developer Tools (which are in every Google Chrome installation) and inspect the _Network_ tab. From there, it's easy to find the request that you crafted and triggered using the Advanced HTTP Client and then have it exported as a `curl` command.
+
+.Using the Developer Tools in Google Chrome to get a `curl` invocation that replays the HTTP request - very handy!
+image::{images}/rest-chrome-httpclient-curl.jpg[this is very handy!]
+
+
+
+=== Using Spring Boot's Default REST Support
+==== basic REST APIs with PUT, GET, DELETE, POST
+==== status codes
+==== headers
+==== `@RequestBody` and `@ResponseBody`
+==== `ResponseEntity<T>`
+==== Long Running Requests
+==== Server Sent Events?
+
+
+=== Adding A Custom `HttpMessageConverter`
+==== http://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/http/converter/protobuf/ProtobufHttpMessageConverter.html[Spring framework 4.1's Google Protocol Buffers support]
+
+
+=== Spring 4.1's JSONP support  [[jsonp]]
+
+
+=== HTTP `OPTIONS`
+=== HATEOAS
+HATEOAS is an implementation of the
+
+==== Traverson Client and the `RestTemplate`
+https://github.com/spring-projects/spring-hateoas/blob/master/src/test/java/org/springframework/hateoas/client/TraversonTests.java
+
+
+=== Documenting Your REST APIs
+==== ALPS
+==== Matt Raible's Auto-Configuration for Swagger
+http://localhost:8080/swagger/index.html and  http://localhost:8080/api-docs/default/customer-rest-controller and http://java.dzone.com/articles/spring-boot-swagger-ui and https://github.com/kbastani/bootiful-book/blob/rest/bootiful-rest/bootiful-rest-basics/README.md
+==== Spring REST Docs
+
+==== CORS support? (does this belong in the web chapter?)
+https://spring.io/blog/2015/06/08/cors-support-in-spring-framework
+
+
+=== Spring Data REST
+==== `BeforeCreateEvent` and `AfterCreateEvent`
+
+
+=== Streaming Data Using Spring MVC and Java 8 `Stream`s
+See this post from https://www.airpair.com/java/posts/spring-streams-memory-efficiency[AirPair].
+
+
+http://www.infoq.com/articles/power-of-raml?utm_source=infoq&utm_medium=popular_widget&utm_campaign=popular_content_list&utm_content=presentation

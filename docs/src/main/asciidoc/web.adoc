@@ -1,0 +1,29 @@
+=  Web Programming
+
+== The Deployed Web Server
+
+== Model View Controller
+
+== A View to a Thrill
+=== Thymeleaf
+=== GSP
+=== JSP
+=== Freemarker
+=== Velocity
+
+== Web Sockets
+== Web Sockets with Spring Integration
+=== Using RabbitMQ
+
+== Vaadin and Spring Boot
+
+== Managing JavaScript Dependencies
+
+== Using the Custom WRO4j Auto-Configuration
+(https://github.com/sbuettner/spring-boot-autoconfigure-wro4j)
+
+== SSL Termination and other Server Customizations
+
+== Friendly Boot with Spring Social
+
+== Using Spring Session

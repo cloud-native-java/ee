@@ -1,0 +1,7 @@
+
+= [[spring-cloud-continuous-delivery]] Continuous Delivery
+
+- in this chapter we'll talk about how to setup CD on various CI servers like Circle CI, Jenkins, and Travis CI..
+- we'll look at how to manage the various stages of Jez Humble's CD book and how to wire together the things we've looked at variously: testing (acceptance, unit, integration),  http://axelfontaine.com/blog/maven-releases-steroids-2.html[releases], and
+ deployment (well look at strategies that use the Cloud Foundry client-API to deploy services).
+- http://scottchacon.com/2011/08/31/github-flow.html

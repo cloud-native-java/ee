@@ -1,0 +1,6 @@
+# Tooling for Smarter Applications
+
+
+- 
+
+// I want to add a chapter on tooling to book. can center around start.spring.io and the IDE and itnegrated guide-centric approach. itll also talk about how we defer mroe and more integration to runtime. this allows the tools to be smarter. we also make runtime more powerful. do more with common approach (Java, .properties, .yml, vs xml/java/and a bash script to do code-gen and xdocklet /rails/roo etc).the solutions required are thus less focused on code and more on pre- and post-code solutions like Maven builds and monitoring tools.

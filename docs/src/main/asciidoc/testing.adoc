@@ -1,0 +1,10 @@
+
+= [[spring-cloud-continuous-delivery]] Testing
+
+- in this chapter we'll look at Spring's unit testing support, how to use mock testing, integration testing and Spring MVC test, how to write acceptance and behavior driven tests suing http://www.slideshare.net/SpringCentral/cucumber-groovy[Cucumber JVM] (might also http://www.infoq.com/presentations/bdd-cucumber-groovy[chekc out this infoq preso]) and [this SprignSource webinar](https://www.youtube.com/watch?v=COTnVE1fw5w).
+
+- VCR / BetaMax for replays of REST calls
+- FluentLenium for browser-automation feature tests
+- Cucumber JVM for feature tests in he given/when/then style (which would use Selenium)
+- writing JS BDD http://searls.github.io/jasmine-maven-plugin/[with Pivotal's Jasmine]
+- Building Client Side Testing https://github.com/klieber/phantomjs-maven-plugin[with Phantom.js] and Fluentlenium

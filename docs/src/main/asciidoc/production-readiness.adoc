@@ -1,0 +1,29 @@
+=  Production Readiness
+
+This chapter will look at various non-functional requirements like monitoring, health-checks, etc., as provided by the Actuator
+
+== Code Complete is not the same as Production-Ready, or, "Boot: Release It! Redux"
+
+
+
+== Meet the Endpoints
+
+== Configuration Reloads
+
+== Metrics: You can't improve what you can't measure
+=== Exporting Your Git Information as an Actuator Endpoint
+=== Using Coda Hale Metrics
+==== Graphite
+==== OpenTSDB
+
+https://github.com/logsearch/logsearch-for-cloudfoundry
+
+A few use cases have come up recently. Wanted to start a discussion if nothing else. Note that some of this is already https://github.com/spring-projects/spring-boot/issues/2949[in Spring Boot 1.3]
+
+- support [HdrHistogram](https://github.com/HdrHistogram/HdrHistogram) (which Netflix and others are using)
+-  support [Netflix's Servo library](https://github.com/Netflix/servo) (in addition to (DropWizard / Code Hale / Yammer / whatever it's called ) Metrics)
+- support [OpenTSDB](http://opentsdb.net/) - I know out friends at TicketMaster and the good @dsyer have code around this
+- [support Statsd](https://github.com/etsy/statsd#installation-and-configuration)
+- support http://influxdb.com[InfluxDB]
+
+Also, what's the recommended way to aggregate all these stats / metrics? Is our advice to use a tool like Graphite / OpenTSDB / Statsd and then analyse / visualize things from there? Is it worth improving docs for that?

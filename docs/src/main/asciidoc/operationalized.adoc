@@ -1,0 +1,28 @@
+# The Operationalized Application
+
+The goal of this chapter is to discuss the various features in my talk, _The Operationalized Application_. See the code at http://github.com/joshlong/the-operationalized-application.git[`the-operationalized-application` GitHub repository].
+
+// mind-the gap: coda hale metrics
+// gauge: instantaneous value of something
+// counter: end value after a series of increments / decrements
+// meters: average rate of events over a period of  time
+// timers: meters
+
+Is there a way to hook the actions to custom metrics (eg, my custom /health endpoint w/ UP or DOWN a la @SpringBoot Actuator?
+
+no custom app metrics yet, but we want to get to that. initial metrics will be:
+
+* aggregated app tput
+* request error count
+* avg latency
+bucketed into 1 second, 1 minute and 1 hour buckets kept for a 24 hr period.
+
+Is there a way to register custom actions (if nothing else, a webhook?)
+
+no, not initially either. but we want to do something like that too. initial actions will be notify and scale.
+
+also, is all of this manageable / workable through an API?
+
+yes the plan is to make this available through an api. the jarvis backend is undergoing changes and stability improvement, but if you have https://apm.run.pivotal.io working, then you can see an example. right now it appears to be down.
+
+i want to build a servie broker that monitors custom health endpoints as a metric and then calls a webhook when something should be done. we can make it asy to standup a Spring Boot-powered app that nows wgat to do w/ that webhook including doing things like semantic remediation. the request t the webhook would include in the context everyting the client would need to respond, including CF API keys so the client could use the `CloudFoundry` client to launch new instances, auto-scale, etc. we could build spring boto-based web endpoints w/ auto-configuration that - once stood up and deployed - could do things like kick off BPMN2 workflows using Activiti, or send a message to a Kafka/JMS/RabbitMQ destination. each time u bind the serice instance it'll standup a custom app htat minitors the apps configured. it would use app-sepcific address to get the big deets.

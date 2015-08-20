@@ -1,0 +1,240 @@
+= Using Spring Boot with Java EE
+
+:javaee-api-root: http://docs.oracle.com/javaee/7/api/
+
+In this chapter we'll look at how to integrate Spring Boot applications with Java EE application infrastructure. Java EE, for our purposes, is an umbrella name for a set of APIs and, sometimes, runtimes (an application server like http://wildfly.org[RedHat's WildFly AS] (the application server formerly named JBoss AS)) that provide those APIs.
+
+
+Spring acts as a consumer of Java EE APIs, where practical. It doesn't _require_ any of them (or any of the myriad XML configuration files that go along with them). Wherever possible, Spring provides you a way to consume practical Java EE APIs à la carte, independent of a full Java EE application server. Spring applications should ideally be portable across environments, including embedded web applications, application servers, and virtually any platform-as-a-service (PaaS) offering.
+
+## Spring Delivers Real Portability, Stability and Java EE
+Spring 4.1 (the baseline release for Spring Boot 1.2 and later) supports Java SE 6 or later (specifically, the minimum API level is JDK 6u18, which was released in early 2010). It's important to remember that Java SE 6 has stopped receiving public updates from Oracle. Oracle has also stopped publishing public updates for Java SE 7 since April 2015. While Spring may run on those editions, you're encouraged to move to Java SE 8.
+
+Spring also supports Java EE 6+ (which came out in 2009). In practical terms, Spring 4 is Servlet 3.0+ focused but Servlet 2.5 compatible. Spring Boot, on the other hand, works best with Servlet 3 or later. Spring Boot supports Servlet 3.1 by default as of Spring Boot 1.2.
+
+Spring Boot's approach to dependencies ensure that you get the latest and greatest, as soon as possible. There's also the question of support. As of April 2015, there are no commercially supported Java EE 7 implementations, almost 2 years after the Java EE 7 standard went final. Even if you don't require support, there are only 4 certified full Java EE 7 implementations, and 2 certified web profile implementations. These implementations are Cosminexus: Hitachi Application Server, TmaxSoft's TMAX JEUS 8, the GlassFish Open Source Edition (which also happens to be the reference implementation for Java EE 7) and RedHat's Wildfly.
+Of these, only WildFly is widely used in any number. To be quite honest, I've never even heard of TMAX JEUS or the Hitachi Application Server. I doubt that most have, in fact. That leaves the reference implementation, which Oracle famously dropped production support for in favor of their WebLogic product, and WildFly, which is particularly prolific, compared to lighter application servers like Apache Tomcat and Eclipse Jetty.
+
+In practical terms, Java EE isn't a large market. It doesn't matter where you look, the market consistently favors http://tomcat.apache.org[Apache's Tomcat] (a project that Pivotal contributes heavily to), Eclipse's Jetty, and RedHat's Wildfly). By far, Apache Tomcat is the largest deployment target. What's up for debate is whether https://plumbr.eu/blog/java/most-popular-application-servers-in-2014[WildFly] is in the number two position or whether Jetty is. My friend Arun Gupta (who works at RedHat) put together a nice blog on http://blog.arungupta.me/jboss-wildfly-top-javaee-appserver-zeroturnaround-report/[JBoss' penetration in the last 5 years]. In all the charts, Tomcat is #1, and WildFly's in the top three. WildFly, let's say, is the most popular full Java EE application server implementation, but the fact remains that - as often as not - it represents the sole Java EE implementation with any marketshare and less than a third of the market. Put another way: most developers don't deploy to Java EE-compatible containers. Spring, by virtue of the fact that it supports numerous Java EE APIs, helps bring the useful Java EE APIs to the growing majority that aren't running Java EE application servers.
+
+Spring also offers a _very_ good backwards-compatibility story, too. An application written using Spring 1.0 can in 99% of situations be upgraded with a drop-in replacement of the newer release of Spring, even on older generations of Java EE. Replace the dependencies for an application written against J2EE (what Java EE was called before the marketing people decided to rebrand everything ten years or so ago from J2EE and J2SE and J2ME to Java EE, Java SE, and Java ME) with modern Java EE dependencies and much of the code would not even compile, let alone run.
+
+We on the Spring team believe that Java EE offers some very compelling APIs. The Servlet API, JSR 330  (`javax.inject`) and JSR 303 (`javax.validation`), JCache, JPA, JMS, etc., to name a few, are very useful and - where practical for users - Spring supports them.  Indeed, we often deliver appropriate support months or years before certified Java EE implementations, like we did with JSR 107 (the JCache API).
+
+As developers move to the cloud, and as a result, to a cloud-native architecture, we see decreasing value in relying on Java EE. It fails to meet the use cases most developers are facing, and so - if reliance on Java EE is required - I hope developers will consider Spring as a way to plug the many existing gaps. Java EE APIs are notoriously slow to evolve. Java EE 8 will be released (_very_ tentatively) by the end of 2016. At the time of this writing in April 2015, the Java EE 8 timeline is a few months off-track. A release in 2015 implies a production timeline of 2018 or longer (judging from current tracking). Java EE 8 offers no support for NoSQL, or cloud-based applications, but it _does_, very importantly, finally offer https://java.net/projects/javaee-spec/lists/users/archive/2014-07/message/3[an API for binding JSON to Java objects]! This support is very similar to what Spring supports through the _non-standard_  Jackson library since 2009. The Java EE standard is littered with these sorts of - eh.. - _improvements_ that I dare say would make laugh a developer using Ruby on Rails or Node.js or PHP.
+
+In this chapter, we will look at both how to deploy a Spring application to a classic Java EE application server and how to consume common Java EE APIs, both inside and outside of a classical Java EE application server.
+
+== Dependency Injection with JSR 330 (and JSR 250)
+
+Spring has long offered various approaches to providing configuration. Spring doesn't care, really, where it learns about your objects and how you wire them together. In the beginning, of course, there was the XML configuration format. Later, Spring introduced component scanning that picked up beans annotated under a package structure that are annotated with stereotype annotations like `@Component`. Then, it introduced in 2006 the Spring Java Configuration project which makes it easy to describe beans to Spring in terms of objects returned from methods that were annotated with the `@Bean` annotation. You might call these bean definition _provider methods_.
+
+Meanwhile, at Google, the amazing Bob Lee introduced Guice, which also provides the ability to define bean definition provider methods, like the Spring Java configuration project. These two options, along with a few others, evolved independently and each garnered a large community.
+
+Let's skip ahead to 2007, 2008, and 2009 and formative days of Java EE 6. The team behind JBoss' Seam who had developed their own dependency injection technology attempted to define a standard, JSR 299 (CDI), to define what it means to be a dependency injection technology. Naturally, neither Seam nor JSR 299 looked anything like Spring or Guice, the two most entrenched and popular technologies, _by any stretch_, so Spring founder Rod Johnson and Guice founder Bob Lee proposed JSR 330. JSR 330 defines a common set of annotations for the surface area of dependency injection frameworks _that impact business component code_. This left each dependency injection container to provide value in the configuration itself.
+
+> TIP:  JSR 330 was not offered as a large, tedious specification with hundreds of pages, but instead as a tiny set of JavaDocs for the handful of annotations and a single interface in the proposed API. Many (particularly those behind JSR 299) felt it was an affront to the JCP process, and it was even suggested that it could never make it through the JCP process in time for inclusion in Java EE 6, but it did! At the time, it was the fastest JCP standard ever.
+
+JSR 330 is natively supported, of course, by Spring and Guice and - because cooler heads eventually prevailed - by JSR 299 implementations. It's so common in fact other DI technologies like Dagger, which is optimized for compile-time code-generation and mobile environments like Android, also support it. If you want to have portable dependency injection, use JSR 330.
+
+You'll commonly use a few annotations with JSR 330, assuming you have `javax.inject` : `javax-inject` : `1` on the classpath, to both define, resolve and inject bean references.
+
+ - `@Inject` is equivalent to Spring's `@Autowired` annotation. It identifies injectable constructors, methods and fields.
+ - `@Named` is more or less equivalent to Spring's various stereotype annotations like `@Component`. They mark a bean to be registered with the container and it can be used to give the bean a String-based ID by which it may be registered.
+ -  `@Qualifier` can be used to _qualify_ beans by type (or String ID). This is, naturally, almost identical to Spring's `@Qualifier` annotation.
+ - `@Scope` is more or less to Spring's `@Scope` annotation and is used to tell the container what the lifecycle of a bean is. You might, for example, specify that a bean is `session` scoped, that is - it should live and die along the lines of an HTTP request.
+ - `@Singleton` tells the container that the bean should be instantiated only once. This is Spring's default, but it's such a common concept that it was worth making sure all implementations support it.
+
+JSR 330 also defines one interface, `javax.inject.Provider<T>`. Business components can inject instances of a given bean, `Foo`, directly or using a `Provider<Foo>`. This is more or less analogous to Spring's `ObjectFactory<T>` type. Compared to injecting an instance directly, the `Provider<T>` instance can be used to retrieve multiple instances of a given bean, handle _lazy_ semantics, break circular dependencies, and abstract containing scope.
+
+TIP: JSR 250, which comes from Java EE 5, is _also_ supported natively in Spring if the types are on the classpath (they are in newer versions of the JDK). You may have seen these annotations if you've ever used `@javax.annotation.Resource`, for example. These annotations are commonly used in EJB 3 code, but I've never really seen them used elsewhere.
+
+
+== Building REST APIs with JAX-RS (Jersey)
+Spring Boot makes it dead simple to stand up REST APIs using JAX-RS. JAX-RS is a standard and requires an implementation. Our example http://docs.spring.io/spring-boot/docs/1.2.0.BUILD-SNAPSHOT/reference/htmlsingle/#boot-features-jersey[demonstrates Boot's JAX-RS auto-configuration for Jersey 2.x] in the `GreetingEndpoint`.
+
+.The JAX-RS `GreetingEndpoint`
+[source,java]
+----
+include::{book-root}/bootiful-ee/src/main/java/demo/GreetingEndpoint.java[]
+----
+
+<1> JSR 330's `@Inject` annotation
+<2> JAX-RS's `@Path` annotation is functionally equivalent to Spring MVC's `@RequestMapping`. It tells the container under what route this endpoint should be exposed.
+<3> Spring MVC's `@RequestMapping` provides a `produces` and `consumes` attribute that lets you specify what content-types a given endpoint can consume, or produce. This is instead a standalone annotation in JAX-RS.
+<4> The HTTP verb, also otherwise specified in Spring MVC's `@RequestMapping` annotation, is specified here as a standalone annotation.
+<5> The `@QueryParam` annotation tells JAX-RS to inject any incoming request parameters (`?name=..`) as method arguments. In Spring MVC, you'd use `@RequestParam`-annotated arguments, instead.
+
+Jersey requires a `ResourceConfig` subclass to enable basic features and register components.
+
+.The `ResourceConfig` subclass that configures Jersey
+[source,java]
+----
+include::{book-root}/bootiful-ee/src/main/java/demo/JerseyConfig.java[]
+----
+<1> again, we register the endpoint using JSR 330, though we could just as easily have used any of Spring's stereotype annotations
+<2> this is the JAX-RS endpoint we just looked at
+<3> we need to tell JAX-RS that we want to handle JSON marshalling. Java EE doesn't have a built-in API for marshalling JSON (as we discussed above, it'll tentatively be available in Java EE 8 around 2018), but you can use Jersey-specific _feature_ implementations to plugin popular JSON-marshalling implementations like Jackson
+
+
+Spring Boot auto-configures the Jersey `org.glassfish.jersey.servlet.ServletContainer` as both a `javax.servlet.Servlet` and a `javax.servlet.Filter` that listen for all requests relative to the application root.
+
+In JAX-RS, message encoding and decoding is done through the `javax.ws.rs.ext.MessageBodyWriter` and `javax.ws.rs.ext.MessageBodyReader` SPIs, somewhat akin to Spring MVC's `org.springframework.http.converter.HttpMessageConverter` hierarchy. By default, JAX-RS does not have many useful message body readers and writers enabled. In order to get JSON suppport, I imported the following Maven dependency `org.glassfish.jersey.media:jersey-media-json-jackson:${jersey.version}` and then registered the `JsonFeature` in the `ResourceConfig` subclass.
+
+.the dependencies to bring in the Jersey JAX-RS implementation and Jersey support for JSON.
+[source,xml]
+----
+include::{book-root}/bootiful-ee/pom.xml[tag=jaxrs]
+----
+
+
+The Spring team recommends Spring MVC. It predates JAX-RS, it evolves more quickly, and it's better integrated with the rest of the Spring stack, having a much larger user base. It features integrated support for basic REST services (like what you could build with JAX-RS), but also for adding in hypermedia by adherence to the HATEOAS design principle. It also features integrated support for open-web security standards like <<security.adoc#oauth,OAuth>> and for advanced techniques like differential sync and <<rest.adoc#jsonp,JSONP>>. Though, it is nice to know that existing JAX-RS-based code can easily be used with Spring. Most JAX-RS providers also provide bindings for Spring because it extends the reach of their implementations considerably. The support demonstrated here is just an auto-configuration for Jersey 2 (the most popular implementation), but there's no reason equivalent auto-configurations could not be created for others.
+
+It's worth noting that Java EE 8 will also support an MVC-based web framework that looks to be fairly similar to the basic API and model that Spring MVC has offered since Spring debuted more than a decade ago. This new MVC JSR will build upon JAX-RS, and I, personally, take it as a sort of validation of the Spring MVC approach of supporting both MVC-based web applications and REST services inside of a single programming model, albeit almost 15 years too late for most users.
+
+
+
+
+== JTA and XA Transaction Management
+
+### Resource-Local Transactons with Spring's `PlatformTransactionManager`
+
+Fundamentally, transactions work more or less the same way: a client begins work, does some work, commits the work and - if something goes wrong - restores the state of a resource to how it was before the work began. Implementation across the  numerous resources, however, varies considerably. The JMS API, for example, lets clients create a _transacted_  `Session` that is then committed. The JDBC API offers non-`autoCommit` connections that aggregate work and then commit when explicitly instructed to do so.
+
+_Resource-local_ transactions should be your default approach for transaction management. You'll use them with various transactional Java EE APIs like JMS, JPA, JMS, CCI, and JDBC. Spring supports numerous other transactional resources like AMQP-brokers such as http://rabbitmq.org[RabbitMQ], http://neo4j.com/[the Neo4j graph database], http://www.pivotal.io/big-data/pivotal-gemfire[and Pivotal Gemfire]. Unfortunately, each of these transactional resources offers a different API for initiating, committing, or rolling back work. To simplify things, Spring provides the `PlatformTransactionManager` hierarchy. There are numerous, pluggable implementations of `PlatformTransactionManager` that adapt the various notions of transactions to a common API. Spring is able to manage transactions through implementations of this hierarchy. Spring provides tiered support for transactions.
+
+At the lowest level, Spring provides the `TransactionTemplate`. The `TransactionTemplate` wraps a `PlatformTransactionManager` bean and uses it to manage a transaction given a unit of work which the client provides as an implementation of `TransactionCallback`.
+
+.An example using Spring's lower level `TransactionTemplate` to manage a JDBC `DataSource` resource. Multiple things may happen in the template and they'll be committed atomically or - if an exception should occur - rolled back.
+[source,java]
+----
+include::{book-root}/bootiful-ee/src/main/java/basics/TransactionTemplateApplication.java[tag=transaction-template]
+----
+
+Spring has long supported declarative transaction rules, both external to the business components to which the rules apply, and inline. The most popular way to define transaction rules as of Spring 1.2, released in May 2005 just after Java SE 5, is to use Java annotations.
+
+Spring supports declarative transaction management with its  link:{spring-api-root}/org/springframework/transaction/annotation/Transactional.html[`@Transactional`] annotation. It can be placed on a type or on individual methods. The annotation can be used to specify transactional qualities such as propagation, the exceptions to rollback for, etc.
+
+A year later, Java EE 5 debuted and included EJB 3 which defined an annotation-based way to define transaction boundaries with its `javax.ejb.TransactionAttribute` annotation. Spring _also_ honors this annotation if it's discovered in Spring beans. The `TransactionAttribute` works well for EJB based business components, but the approach falls apart fast outside of EJB based components.  JTA 1.2, which was included in Java EE 7 in 2013 (but which, as we discussed above, isn't readily available and not at all supported in production as of April 2015), defined `javax.transaction.Transactional` as a general purpose transaction boundary annotation, more or less like Spring's `@Transactional` from 8 years earlier. Spring _also_ honors this annotation, if present.
+
+.An example using Spring's declarative transaction boundaries with `@Transactional`
+[source,java]
+----
+include::{book-root}/bootiful-ee/src/main/java/basics/TransactionalApplication.java[tag=transactional]
+----
+
+<1> You could use Spring's `@org.springframework.transaction.annotation.Transactional`
+<2> ..or EJB's `@javax.ejb.TransactionAttribute`
+<3> ..or JTA 1.2's `@javax.transaction.Transactional`
+
+I prefer Spring's `@Transactional` variant. It exposes more power than the EJB3 alternative in that it is able to expose transactional semantics (things like transaction suspension and resumption) that the EJB-specific `@TransactionStatus` (and indeed EJB itself) don't expose, and doesn't require an extra JTA or EJB dependency. It is nice to know that it will work, either way.
+
+### Global Transactions with the Java Transaction API (JTA)
+
+Spring makes working with _one_ transactional resource easy. But what is a developer to do when trying to transactionally manipulate more than one transactional resource, e.g., a _global transaction_? For example, how should a developer transactionally write to a database _and_ acknowledge the receipt of a JMS message?  _Global_ transactions are the alternative to _resource-local_ transactions; they involve _multiple_ resources in a transaction. To ensure the integrity of a global transaction, the coordinator must be an agent independent of the resources enlisted in a transaction. It must be able to guarantee that it can replay a failed transaction, and that it is itself immune to failures. JTA (necessarily) adds complexity and state to the process that a resource-local transaction avoids. Most global transaction managers speak the http://en.wikipedia.org/wiki/X/Open_XA[X/Open XA protocol] which lets transactional resources (like a database or a message broker) enlist and participate in global transactions. Java EE provides a very handy API on top of this protocol called http://en.wikipedia.org/wiki/Java_Transaction_API[JTA].
+
+Integration is, at least in theory, simple. For our purposes, it suffices to know that JTA exposes two key interfaces - the {javaee-api-root}/javax/transaction/UserTransaction.html[`javax.transaction.UserTransaction`] and   {javaee-api-root}/javax/transaction/TransactionManager.html[`javax.transaction.TransactionManager`]. The `UserTransaction` supports the usual suspects: `begin()`, `commit()`, `rollback()`, etc. Clients use this object to begin a global transaction. While the global transaction is open, JTA-aware resources like a JTA-aware JDBC  `javax.sql.XADataSource`, or a JTA-aware JMS `javax.jms.XAConnectionFactory` may _enlist_ in the JTA transaction. They communicate with the global transaction coordinator and follow a protocol to either atomically commit the work in all enlisted resources or rollback. It is up to each atomic resource to support, or not support, the JTA protocol, which itself speaks the XA protocol.
+
+In a Java EE container, the `UserTransaction` object is _required_ to exist in a JNDI context under the binding `java:comp/UserTransaction`, so it's easy for Spring's `JtaTransactionManager` to locate it. This simple interface is enough to handle _basic_ transaction management chores. Notably, it is _not_ sophisticated enough to handle sub-transactions, transaction suspension and resumption, or other features typical of quality JTA implementations. Instead, use a `TransactionManager` instance, if it's available. Java EE application servers are _not_ required to expose this interface, and _rarely_ expose it under the same JNDI binding. Spring knows the well-known contexts for many popular Java EE application servers, and will attempt to automatically locate it for you.
+
+TIP: Often, the bean that implements `javax.transaction.UserTransaction` _also_ implements `javax.transaction.TransactionManager`!
+
+JTA can also be run outside of a Java EE container. There are numerous popular third party (and open-source) JTA implementations, like Atomikos and Bitronix. Spring Boot provides {spring-boot-reference-root}/#boot-features-jta[auto-configurations for both].
+
+http://www.atomikos.com[Atomikos] is commercially supported and provides an open-source base edition. Let's look at an example - in  `GreetingService` - that uses JMS to send notifications and JPA to persist records to an RDBMS as part of a global transaction.
+
+.An example service that works with both a JDBC and a JMS resource through JTA.
+[source,java]
+----
+include::{book-root}/bootiful-ee/src/main/java/demo/GreetingService.java[]
+----
+
+<1> We tell Spring that all public methods on the component are transactional.
+<2> This code uses Spring's `JmsTemplate` JMS client to work with a JMS resource.
+<3> This code uses the `spring-boot-starter-data-jpa` support so can inject a JPA `EntityManager` with JPA's `@PersistenceContext` annotation as per normal Java EE conventions.
+<4> This method takes a boolean that triggers an exception if `true`. This exception triggers a rollback of the JTA transaction. You'll only see evidence that two of the three bodies of work completed after the code is run.
+
+We demonstrate this in `GreetingServiceClient` by creating three transactions and simulating a rollback on the third one. You should see printed to the console that there are two records that come back from the JDBC `javax.sql.DataSource` data source and two records that are received from the embedded JMS `javax.jms.Destination` destination.
+
+.Putting our transactional service through its paces
+[source,java]
+----
+include::{book-root}/bootiful-ee/src/main/java/demo/GreetingServiceClient.java[]
+----
+
+<1> We haven't seen `@PostConstruct` yet. It's part of JSR 250, and is semantically the same as Spring's `InitializingBean` interface. It defines a callback to be invoked _after_ the bean's dependencies have been satisfied both by constructor and by JavaBean properties.
+
+Spring Boot will automatically setup JPA based on the configured `DataSource`. This example  link:{spring-boot-reference-root}/#howto-configure-a-datasource[uses Spring Boot's embedded `DataSource` support]. If an embedded database (like http://www.h2database.com/html/main.html[H2], which is what we're using here, or Derby, and HSQL) is on the classpath, and no `javax.sql.DataSource` is explicitly defined, Spring Boot will create a `DataSource` bean for use.
+
+
+.The dependencies to get JPA working
+[source,xml]
+----
+include::{book-root}/bootiful-ee/pom.xml[tag=jpa]
+----
+
+Spring Boot makes it dead simple to setup a JMS connection, as well. Just like the embedded `DataSource`, Spring Boot can also link:{spring-boot-reference-root}/#boot-features-hornetq[create an embedded JMS `ConnectionFactory`] using RedHat's http://hornetq.jboss.org[HornetQ] message broker in embedded mode. A few properties are required:
+
+.the configuration to configure an embedded JMS `ConnectionFactory`
+[source,properties]
+----
+include::{book-root}/bootiful-ee/src/main/resources/application.properties[]
+----
+
+With that in place, just add the requisite Spring Boot starters and JMS support to activate the right auto-configurations.
+
+.The dependencies to get JMS and HornetQ working
+[source,xml]
+----
+include::{book-root}/bootiful-ee/pom.xml[tag=jms]
+----
+
+If you wanted to connect to traditional, non-embedded instances, it's straightforward to either specify properties in `application.yml` or `application.properties` like `spring.datasource.url` and `spring.hornetq.host`, or simply define `@Bean` definitions of the appropriate types.
+
+This example uses the Spring Boot Atomikos starter to configure Atomikos and the XA-aware JMS and JDBC resources.
+
+.The Spring Boot Atomikos starter support
+[source,xml]
+----
+include::{book-root}/bootiful-ee/pom.xml[tag=jta]
+----
+
+== Deployment in a Java EE Environment
+
+This example also uses the Wildfly (from RedHat) application server's *awesome* http://undertow.io/[Undertow embedded HTTP server] instead of (the default) Apache Tomcat. It's as easy to use Undertow as it is to use Jetty or Tomcat - just exclude `spring-boot-starter-tomcat` and add `spring-boot-starter-undertow`! This contribution originated as a third-party pull request and I've really enjoyed it because it's very fast. You can as easily use Eclipse's Jetty project if you disable Apache Tomcat and then bring in `spring-boot-starter-jetty`.
+
+.Disabling the default of Apache Tomcat in favor of RedHat's Undertow
+[source,xml]
+----
+include::{book-root}/bootiful-ee/pom.xml[tag=undertow]
+----
+
+Though this example uses a lot of fairly familiar Java EE APIs, this is still just typical Spring Boot, so by default you can run this application using `java -jar ee.jar` or easily deploy it to process-centric http://en.wikipedia.org/wiki/Platform_as_a_service[platforms-as-a-service] offerings like Heroku or http://cloudfoundry.org[Cloud Foundry].
+
+If you want to deploy it to a standalone application server like (like Apache Tomcat, or Websphere, or anything in between), it's straightforward to convert the build into a `.war` and deploy it accordingly to any Servlet 3 container. In most cases, it's as simple as making `provided` or otherwise excluding the Spring Boot dependencies that provide APIs (like `spring-boot-starter-tomcat`) that the Java EE container is going to provide.  If you use the http://start.spring.io[Spring Initializr], then you can skip this step by simply choosing `war` from the packaging drop-down.
+
+For Servlet based web applications, you'll need to also add a Servlet initializer class. This is the programmatic equivalent of `web.xml`. Spring Boot provides a base class, `org.springframework.boot.context.web.SpringBootServletInitializer`, that will automatically standup the Spring Boot based auto-configuration and machinery in a standard Servlet 3 fashion. Note that any embedded web-container features will not work in this environment.
+
+.A Servlet 3 intializer class
+[source,java]
+----
+include::{book-root}/bootiful-ee/src/main/java/demo/GreetingServletInitializer.java[]
+----
+
+If you deploy the application to a more classic application server, Spring Boot can take advantage of the application server's facilities, instead. For example, it's dead-simple to consume a JNDI-bound link:{spring-boot-reference-api}/#boot-features-jms-jndi[JMS `ConnectionFactory`], link:{spring-boot-reference-api}/#boot-features-connecting-to-a-jndi-datasource[JDBC `DataSource`] or link:{spring-boot-reference-api}/#_using_a_java_ee_managed_transaction_manager[JTA `UserTransaction`].
+
+== Closing Thoughts
+
+I, personally, would question a lot of these APIs. Do you *really* need distributed, multi-resource transactions? In today's http://www.eaipatterns.com/ramblings/18_starbucks.html[distributed world, consider global transaction managers an architecture smell]. Do you *really* need to use JAX-RS when Spring offers a richer, integrated Spring MVC-based stack complete with MVC, REST, HATEOAS, OAuth and websockets support? JPA's a nice API for talking to a SQL-based `javax.sql.DataSource`, but Spring Data repositories (which include support for JPA, of course, but _also_ for Cassandra, MongoDB, Redis, Riak, Couchbase, Neo4j, and an increasingly long list of alternative technologies) reduce much of the boilerplate to a simple interface definition for the common cases. So, do you really need all of this? It might well be that you do, and the choice is yours, but hopefully this is a stopgap on the road to a microservice architecture.
+
+In the context of microservices, Java EE goes very much against the grain of what a modern microservice architecture needs. Microservices are about small singly focused services with as minimal heft as possible. Some modern application servers can be very tiny, but the principal is the same: why pay for what you don't need? Why go so far to decouple your services from each other only to be satisfied with unneeded coupling of the infrastructure that runs the code?
+
+Application servers were built for a different era (the late 1990s) when RAM was at a premium. The application server promised application isolation and monitoring and consolidated infrastructure, but today it's fairly easy to see it doesn't do a particularly good job of any of that. An application server doesn't protect applications from contention from other applications beyond the class loader. It can't isolate CPU, RAM, filesystems, and even in the JVM itself one component (like the JTA coordinator) can starve the web request processing pool. Instead, these things are provided by the operating system. The operating system cares and knows about processes, not application servers.
+
+It's very common to see applications with the application server configuration (or even the application server itself!) checked into source control systems alongside the application. This (worrisome) approach implies that nobody's trying to squeeze RAM out of their machines by collocating applications on the same application server. Instead, applications need certain application-specific services and with a Java EE container the path of least resistance is to access those from the container. But that's not the easiest way. Spring applications enjoy security, messaging, distributed transactions, centralized configuration, service resolution, and much more without being coupled to an application server.
+
+Many developers use the application server (or web servers like Apache Tomcat, to which Pivotal is a leading contributor) because it presents a consistent operations burden. Operations know how to deploy, scale and manage the application server. Fair enough. Today, however, the container of choice is something like Docker. Docker exposes a consistent management surface area for operations to work with. What runs inside is entirely opaque.
+
+Docker only cares about processes. There's no assumption that your application will even expose an HTTP endpoint. Indeed, there's often no reason that it should. There's nothing about microservices that implies HTTP and REST, common though it is. By moving away from the application server and moving to `.jar` based deployments, you can use HTTP (and a Servlet container) if and only if it's appropriate. I like to think of it like this: what if the protocol _du jour_ was FTP, and not HTTP? What if the whole world accessed services exposed through an FTP server? Does it feel just as architecturally unassailable to deploy our applications to an FTP server? No? Then why do we deploy them to HTTP, EJB, JMS, JNDI and XA/Open servers?
+
+In this chapter we've tried to show that Spring plays well with Java EE services and APIs, and that those APIs can be handy, even in the world of microservices. What we hope you'll take away is that there's no need for the Java EE application server itself. It's just going to slow you down.

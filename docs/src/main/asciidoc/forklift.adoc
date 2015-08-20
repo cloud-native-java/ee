@@ -1,0 +1,169 @@
+include::variables.txt[]
+
+== The Forklifted Application
+
+So you've got that shiny new distributed runtime infinite greenfield potential and lots of existing applications, now what?
+
+=== The Contract
+Cloud Foundry aims to improve velocity by reducing or at least making consistent the operational concerns associated with deploying and managing applications. Cloud Foundry is an ideal place to run online web-based services and applications, service integrations and back-office type processing.
+
+http://cloudfoundry.org[Cloud Foundry] optimizes for the continuous delivery of web applications and services by making assumptions about the shape of the applications it runs. The _inputs_ into Cloud Foundry are applications - Java `.jar` binaries, Ruby on Rails applications, Node.js applications, etc. - Cloud Foundry provides well-known operational benefits (log aggregation, routing, self-healing, dynamic scale-up and scale-down, etc.) to the applications it runs. There is an implied contract between the platform and the applications that it runs. This contract allows the platform to keep promises to the applications it runs.
+
+Some applications may never be able to meet that contract. Other applications might be able to, albeit with some soft-touch adjustments. In this chapter, we'll look at possible soft-touch refactorings to coerce legacy applications to run on Cloud Foundry.
+
+The goal isn't, in this case, to build an application that's _native_ to the cloud. It's to move existing workloads to the cloud to reduce the operational surface area, to increase uniformity. Once an application is deployed on Cloud Foundry it is at least as well off as it was before and now you have one less snowflake deployment to worry about.
+
+I distinguish this type of workload migration - _application forklifiting_ - from building a _cloud native application_. Much of what http://spring.io/blog[we]  http://pivotal.io/blog[talk] about these days is about building _cloud native applications_ - applications that live and breathe in the cloud (they inhale and exhale as demand and capacity require) and that fully exploit the platform. That journey, while ideal and worth taking on assuming the reward on investment is tangible, is a much longer larger discussion and not the focus of this chapter.
+
+Application behavior is, broadly speaking,  the sum of its environment and code. In this chapter, we'll look at strategies for moving a legacy Java application from some of the environments that legacy Java applications typically live in. Many of these strategies can be generalized to apply to other languages and runtimes. Let's look at some common patterns typical of applications developed without the cloud in mind, and then let's look at some specific solutions and accompanying code.
+
+=== Migrating Application Environments
+
+There are some qualities that are common to all applications, and those qualities - like RAM and DNS routing - are configurable directly through the Cloud Foundry `cf` CLI tool, various dashboards, or in an application's `manifest.yml` file. If your application is a compliant application that just needs more RAM or a custom DNS route, then you should have everything you need in the `cf` CLI alone.
+
+==== Support for Different Languages and Runtimes with Out-of-the-Box Buildpacks
+Things sometimes just aren't that simple, though. Your application may run in any number of snowflake environments, whereas Cloud Foundry makes very explicit assumptions about the environments its applications run in. These assumptions are encoded to some extent in the platform itself and in _buildpacks_. Buildpacks were adopted from Heroku. Cloud Foundry and Heroku don't really care what kind of application they are running. They care about Linux containers, which are ultimately operating system processes. Buildpacks tell Cloud Foundry what to do given a Java `.jar`, a Rails application, a Java `.war`, a Node.js application, etc. A buildpack is really a set of callbacks - shell scripts that respond to well-known calls - that the runtime will use to ultimately create a Linux container to be run. This process is called _staging_.
+
+Cloud Foundry provides  http://docs.pivotal.io/pivotalcf/buildpacks[many out-of-the-box _system buildpacks_]. Those buildpacks can be customized or even completely replaced. Indeed, if you want to run an application for which there is no existing buildpack provided out [of the box https://github.com/cloudfoundry-community/cf-docs-contrib/wiki/Buildpacks[(by the Cloud Foundry community, Heroku or Pivotal)] then at least it's easy enough http://docs.pivotal.io/pivotalcf/buildpacks/custom.html[to develop and deploy your own]. There are buildpacks for all manner of environments and applications out there, including one called _Sourcey_ that simply compiles native code for you!
+
+
+==== Customizing Buildpacks
+
+These buildpacks are meant to provide sensible defaults but be adaptable. As an example, the default Java/JVM buildpack supports `.war`s (which it'll run inside of a up-to-date version of Apache Tomcat), Spring Boot-style executable `.jar`s, Play web framework applications, Grails applications, and much more.
+
+If the system buildpacks don't work for you and you want to use something different, you only need to tell Cloud Foundry where to find the code for the buildpack using the `-b` argument to `cf push`:
+
+```sh
+cf push -b https://github.com/a/custom-buildpack.git#my-branch  custom-app
+```
+
+Alternatively, you can specify the buildpack in the `manifest.yml` file that accompanies your application. Suppose we have a Java EE application that your organization has historically deployed using Websphere. IBM make a very capable WebSphere Liberty buildpack. To demonstrate this, I've written a stock Java EE `Servlet` that I want to deploy using WebSphere Liberty:
+
+
+.A (very) basic Java EE `Servlet`
+[source,Java,indent=0]
+----
+include::{book-root}/forklifting/buildpacks/src/main/java/demo/DemoApplication.java[]
+----
+
+To run this, I've specified the WebSphere Liberty buildpack in the application's manifest, which looks like this:
+
+.The `manifest.yml` for our WebSphere Liberty application
+[source,yaml,indent=0]
+----
+include::{book-root}/forklifting/buildpacks/manifest.yml[]
+----
+
+
+Often an existing buildpack can be made to do what you want to do, but with some minor tweaks. In the worst case, you can always just fork the code and make the tweak and specify the URI for the forked buildpack on `cf push`.
+
+Some buildpacks lend themselves to customization. The https://github.com/cloudfoundry/java-buildpack[Java buildpack] - which was originally developed by the folks at Heroku and which people working on Cloud Foundry have since greatly expanded - supports configuration through environment variables. The Java buildpack provides default configuration in the `config` directory for various aspects of the buildpack's behavior. You can override the behavior described in a given configuration file by providing an environment variable (prefixed with `JBP_CONFIG_`)  of the same name as the configuration file, sans the `.yml` extension. Thus, borrowing an example from the excellent https://github.com/cloudfoundry/java-buildpack/blob/master/README.md[documentation], if I wanted to override the JRE version and the memory configuration (which lives in the `config/open_jdk_jre.yml` file in the buildpack), I might do the following:
+
+```sh
+cf set-env custom-app JBP_CONFIG_OPEN_JDK_JRE '[jre: {version: 1.7.0_+}, memory_calculator: {memory_heuristics: {heap: 85, stack: 10}}]'
+```
+
+==== Containerized Applications
+
+Applications in the Java world that were developed for a J2EE / Java EE application server tend to be very _sticky_ and hostile to migration outside of that application server. Java EE applications - for all their vaunted portability -  use class loaders that behave inconsistently, offer different subsystems that themselves often require proprietary configuration files and - to fill in the many gaps - they often offer application server-specific APIs. If your application is completely intractable and these various knobs and levers we've looked at so far don't afford you enough runway to make the jump, there may still be hope yet! Be sure to look through the community buildpacks. There are buildpacks that stand up IBM's WebSphere (with contributions from IBM, since they have a PaaS based on Cloud Foundry!) and RedHat's WildFly, as well, for example.
+
+Cloud Foundry "Diego" also supports running containerized (Docker, with other containers to come) applications. This might be an alternative if you've already got an application containerized and just want to deploy and manage it with the same toolchain as any other application. We've extracted some of the interesting scheduling and container-aware features of the forthcoming Cloud Foundry into a separate technology called Lattice. Lattice is Cloud Foundry by subtraction. If nothing else, you can use it to containerize and validate your existing application. We've even put together some nice guides http://spring.io/guides/gs/spring-boot-docker/[on containerizing your Spring applications] and http://spring.io/guides/gs/spring-cloud-and-lattice/[then running them on Lattice]!
+
+We've run the gamut from common-place configuration, to application- and runtime-specific buildpack overrides to opaque containerized applications. I start any attempts to forklift an application in this order, with simpler tweaks first. The goal is to do as little as possible and let Cloud Foundry do as much as possible.
+
+=== Soft-Touch Refactoring to get your application into the cloud
+
+In the last section we looked at things that you can do to wholesale move an application from it's existing environment into a new one without modifying the code. We looked at techniques for moving simple applications that have fairly common requirements all the way to very exotic requirements. We saw that there are ways to all but virtualize applications and move them to Cloud Foundry, but we didn't look at how to point applications to the backing services (databases, message queues, etc.) that they consume. We also ignored, for simplicity, that there are some classes of applications that could be made to work cleanly on Cloud Foundry with some minor, tedious, and feasible changes.
+
+It always pays off to have a comprehensive test suite in place to act as a harness against regressions when refactoring code. I understand that - due to their very nature - some legacy applications won't have such a test suite in place.
+
+We'll look mostly at _soft-touch_ adjustments that you could make to get your application working, hopefully with a minimum of risk. It goes without saying, however, that - absent a test suite - more modular code will isolate and absorb change more readily. It's a bitter irony then that the applications most in need of a comprehensive test-suite are the ones that probably don't have it: large, monolithic, legacy applications. If you _do_ have a test suite in place, you may not have smoke tests that validate connectivity and deployment of the application and its associated services. Such a suite of tests is necessarily harder to write but would be helpful precisely when undertaking something like forklifting a legacy application into a new environment.
+
+
+==== Talking to Backing Services
+
+A backing service is a service (databases, message queues, email services, etc.) that an application consumes. Cloud Foundry applications consume backing services by looking for their locators and credentials in an environment variable called `VCAP_SERVICES`. The simplicity of this approach is a feature: any language can pluck the environment variable out of the environment and parse the embedded JSON to extract things like service hosts, ports, and credentials.
+
+Applications that depend on Cloud Foundry-managed backing services can tell Cloud Foundry to create that service on-demand. Service creation could also be called _provisioning_. Its exact meaning varies depending on context; for an email service it might mean provisioning a new email username and password. For a MongoDB backing service it might mean creating a new Mongo database and assigning access to that MongoDB instance. The backing service's lifecycle is modeled by a Cloud Foundry service broker instance. Cloud Foundry service brokers are REST APIs that Cloud Foundry cooperates with to manage backing services.
+
+Once the broker is registered with Cloud Foundry, it is available through the `cf marketplace` command and can be provisioned on demand using the `cf create-service` command. This service is ready to be consumed by one or more applications. At this point the service is a logical construct with a logical name that can be used to refer to it.
+
+Here's a hypothetical service creation example. The first parameter, `mongo`, is the name of the service. I'm using something generic here but it could as easily have been New Relic, or MongoHub, or ElephantSQL, or SendGrid, etc. The second parameter is the plan name - the level and quality of service expected from the service provider. Sometimes higher levels of service imply higher prices. The third parameter is the aforementioned logical name.
+
+```sh
+cf create-service mongo free my-mongo
+```
+
+It's not hard to create a service broker, but it might be more work than you need. If your application wants to talk to an existing, static service that isn't likely to move and you just want to point your application to it, then you can use https://docs.cloudfoundry.org/devguide/services/user-provided.html[_user provided services_]. A user-provided service is a fancy way of saying "take this connection information and assign a logical name to it and make it something I can treat like any other managed backing service."
+
+A backing service - created using the `cf ceate-service` command or as a user-provided service -  is invisible to any consuming applications until it is _bound_ to an application; this adds the relevant connectivity information to that application's `VCAP_SERVICES`.
+
+If Cloud Foundry supports the backing service that you need - like MySQL or MongoDB - and if your code has been written in such a way that it centralizes the initialization or acquisition of these backing services - ideally using something like dependency injection (which Spring makes dead simple!) - then switching is a matter of rewiring that isolated dependency. If your application has been written to support 12 Factor-style configuration  where things like credentials, hosts, and ports are maintained in the environment or at least external to the application build then you may be able to readily point your application to its new services without even so much as a rebuild. For a deeper look at this topic, check out this https://spring.io/blog/2015/01/27/12-factor-app-style-backing-services-with-spring-and-cloud-foundry[blog on 12 Factor app style service configuration].
+
+Often, however, it's not this simple. Classic J2EE / Java EE applications often resolve services by looking them up in a well-known context like JNDI. If your code was written to use dependency injection then it'll be fairly simple to simply to rewire the application to resolve its connection information from the Cloud Foundry environment. If not, then you'll need to rework your code and - ideally - do so by introducing dependency injection to insulate your application from further code duplication.
+
+====  Achieving Service Parity with Spring
+
+In this section, we'll look at some things that people tend to struggle with when moving applications to lighter weight containers and - by extension - the cloud. This is by no means an exhaustive list.
+
+===== Remote Procedure Calls
+
+Cloud Foundry (and indeed the majority of clouds) are HTTP-first. It supports individually addressable nodes, and it even now has support for non-routable custom ports, but these features work against the grain and aren't supported in every environment. If you're doing RPC with RMI/EJB, for example, then you'll need to tunnel it through HTTP. Ignoring for now the wisdom of using RPC, it's easier if you do RPC through HTTP. There are many ways to do this including XML-RPC, SOAP (bleargh!), and even http://docs.spring.io/spring/docs/current/spring-framework-reference/html/remoting.html[Spring's HTTP Invoker service exporters] and service clients which funnels RMI payloads through HTTP. This last option is convenient.
+
+`DemoApplication.java` demonstrates how to export  `SimpleMessageService` through its interface using HTTP Invoker.
+
+.the `DemoApplication` exports a service using the `HttpInvokerServiceExporter`.
+[source,java,indent=0]
+----
+include::{book-root}/forklifting/rmi/src/main/java/demo/DemoApplication.java[]
+----
+
+<1> the implementation itself needs to implement, at a minimum, the service interface specified in the `HttpInvokerServiceExporter`
+<2> the `HttpInvokerServiceExporter` maps the given bean to an HTTP endpoint (`/messageService`) under the Spring `DispatcherServlet`.
+
+
+The `Message` itself, of course, needs to implement `java.io.Serializable` to be serialized, just as with straight RMI serialization. Spring provides mirror image beans to create clients to these remote services based on an agreed upon service interface. In the example below, we'll use the `HttpInvokerProxyFactoryBean` to create a client side proxy to the remote service, bound to the same service contract. This shared contract, by the way, is the quality of RPC that's so limiting: it couples the client to the types of the service, and frustrates the service's ability to evolve without breaking the client.
+
+.Our test stands up an RPC client in `DemoApplicationTests.java` and then calls it
+[source,java,indent=0]
+----
+include::{book-root}/forklifting/rmi/src/test/java/demo/DemoApplicationTests.java[]
+----
+
+<1> the test first stands up the HTTP Invoker service
+<2> ..then stands up the configuration for the client
+<3> ..then interacts with the service through the shared interface
+<4> the `HttpInvokerProxyFactoryBean` is the mirror image of the `HttpInvokerServiceExporter`
+
+===== HTTP Sessions with Spring Session
+
+Cloud Foundry (and most cloud environments in general) don't do well with multicast networking. One use case commonly associated with multicast networking is HTTP session replication. You can get HTTP session replication, foregoing multicast networking, by using http://spring.io/projects/spring-session[Spring Session]. Spring Session is a drop in replacement for the Servlet HTTP Session API that relies on an SPI to handle synchronization. The default implementation of this SPI uses Redis for distribution, instead of multicast. You just install Spring Session, you don't have to do anything else to your HTTP session code. The HTTP Servlet specification provides for replacing the implementation in this manner, so this works in a consistent manner across Servlet implementations. Spring Session in turn writes session state through the SPI. Redis is available as a backing service on Cloud Foundry. As multiple nodes spin up, they all talk to the same Redis cluster, and benefit from Redis' world-class state replication. Spring Session gives you a few other features too, for free. https://spring.io/blog/2015/03/01/the-portable-cloud-ready-http-session[You might consult this blog - _The Portable, Cloud Ready, Session_ - for more details].
+
+.`DemoApplication.java`
+[source,java,indent=0]
+----
+include::{book-root}/forklifting/sessions/src/main/java/demo/DemoApplication.java[]
+----
+
+<1> this example stores an attribute in the HTTP session if it's not already present. Subsequent calls to the `/hi` endpoint should return the same, cached value in the HTTP session.
+
+To see the example at work, bring up Redis with the Redis CLI, then clear it.  Bring this application up and visit `http://localhost:8080/hi`, then ex
+
+Cloud Foundry doesn't provide a (durable) file system. If your application requires a file system for durable persistence, consider using something http://www.mkyong.com/mongodb/spring-data-mongodb-save-binary-file-gridfs-example/[like a MongoDB GridFS-based solution] or an Amazon Web services-based S3 solution. If your application's use of the file system is ephemeral - staging file uploads or something - then you can use the Cloud Foundry application's temporary directory but keep in mind that Cloud Foundry doesn't guarantee anything. You don't need to worry about things like where your database lives and where the application logs live, though; Cloud Foundry will handle all of that for you.
+
+I don't know of a good JMS solution for Cloud Foundry. It's invasive, but straightforward, to rework most JMS code to use the AMQP protocol, which RabbitMQ speaks. If you're using Spring, then the primitives for dealing with JMS or RabbitMQ (or indeed, Redis' publish-subscribe support) look and work similarly. RabbitMQ and Redis are available on Cloud Foundry.
+
+If you're application requires distributed transactions, using the XA/Open protocol and JTA, it's possible to http://spring.io/blog/2011/08/15/configuring-spring-and-jta-without-full-java-ee/[configure standalone XA providers using Spring] and it's downright easy to https://spring.io/blog/2014/11/23/bootiful-java-ee-support-in-spring-boot-1-2[do so using Spring Boot]. You don't need a Java EE-container hosted XA transaction manager.
+
+Cloud Foundry terminates HTTPS requests at the highly available proxy that guards all applications. Any call that you route to your application will respond to HTTPS as well. If you're using on-premise Cloud Foundry, you can provide your own certificates centrally.
+
+Does your application use SMTP/POP3 or IMAP? If you are using email from within a Java application, you're likely using JavaMail. JavaMail is a client Java API to handle SMTP/POP3/IMAP based email communication. There are many email providers-as-a-service. http://docs.spring.io/spring-boot/docs/1.3.0.BUILD-SNAPSHOT/api/org/springframework/boot/autoconfigure/sendgrid/SendGridAutoConfiguration.html[SendGrid] - which is supported out of the box with Spring Boot 1.3 - is a cloud-powered email provider that you use with JavaMail.
+
+Simialarly, if you have a strong need for a centralized identity provider to handle questions about users, roles, and authority, you might https://stormpath.com[find that Stormpath] is a worthy hosted service that can act as a facade in front of other identity providers, or be the identity provider itself. There's even a very simple Spring Boot and https://github.com/stormpath/stormpath-spring-security[Spring Security integration]!
+
+
+=== Next Steps
+
+Hopefully, there aren't any! The goal of this post was to address common concerns typical of efforts to move existing legacy applications to the cloud. Usually that migration involves some combination of the advice in this post. Once you've made the migration, have a strong cup of water! You've earned it. That's one less thing to manage and worry about.
+
+If you have time and interest, there is quite a lot to do in making the move to cloud-native applications. This very blog is routinely full of such posts.

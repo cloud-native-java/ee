@@ -1,0 +1,13 @@
+
+include::variables.txt[]
+
+= {book-name}
+Josh Long
+
+
+// ==================
+//include::cloud.adoc[]
+include::rest.adoc[]
+// include::configuration.adoc[]
+// include::ee.adoc[]
+// ==================

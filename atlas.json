@@ -1,0 +1,38 @@
+{
+  "branch": "master",
+  "files": [
+    "docs/src/main/asciidoc/rest.adoc",
+    "docs/src/main/asciidoc/configuration.adoc"
+  ],
+  "formats": {
+    "pdf": {
+      "version": "web",
+      "toc": true,
+      "index": true,
+      "syntaxhighlighting": true,
+      "show_comments": true
+    },
+    "epub": {
+      "toc": true,
+      "index": true,
+      "syntaxhighlighting": true,
+      "epubcheck": true,
+      "show_comments": false
+    },
+    "mobi": {
+      "toc": true,
+      "index": true,
+      "syntaxhighlighting": true,
+      "show_comments": false
+    },
+    "html": {
+      "toc": true,
+      "index": true,
+      "syntaxhighlighting": true,
+      "show_comments": false,
+      "consolidated": false
+    }
+  },
+  "theme": "oreillymedia/animal_theme",
+  "title": "Cloud Native Java"
+}
