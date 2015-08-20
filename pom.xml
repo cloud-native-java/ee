@@ -12,7 +12,7 @@
 
 <!-- now is th time -->
     <artifactId>ee</artifactId>
-
+         <!-- tidy-->
     <properties>
         <start-class>demo.Application</start-class>
     </properties>
