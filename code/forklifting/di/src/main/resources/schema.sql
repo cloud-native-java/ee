@@ -1,1 +1,0 @@
-create table FTP_USER ( id serial, username VARCHAR , admin boolean, enabled boolean);
