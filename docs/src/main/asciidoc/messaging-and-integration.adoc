@@ -1,9 +1,0 @@
-= Messaging and Integration
-
-== RabbitMQ
-== ActiveMQ
-== the Common Messaging Abstraction
-== Spring Integration
-https://github.com/spring-projects/spring-bus
-
-== Building Process-Driven Workflow Applications with Acitviti
