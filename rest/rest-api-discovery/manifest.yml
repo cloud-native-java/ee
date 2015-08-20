@@ -1,0 +1,13 @@
+---
+applications:
+- name: bootiful-rest-api-discovery
+  memory: 512M
+  instances: 1
+  host: bootiful-rest-api-discovery-${random-word}
+  path: target/bootiful-rest-api-discovery.jar
+  env:
+    SPRING_PROFILES_ACTIVE: cloud
+    DEBUG: "true"
+    debug: "true"
+#  services:
+#    - m-mongo
