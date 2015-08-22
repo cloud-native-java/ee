@@ -50,8 +50,10 @@ public class TransactionalApplication {
             this.customerRowMapper = customerRowMapper;
         }
 
-        // @org.springframework.transaction.annotation.Transactional <1>
-        // @javax.ejb.TransactionAttribute <2>
+        // @org.springframework.transaction.annotation.Transactional
+        // <1>
+        // @javax.ejb.TransactionAttribute
+        // <2>
         @javax.transaction.Transactional  // <3>
         public Customer enableCustomer(Long id) {
 
@@ -130,4 +132,3 @@ public class TransactionalApplication {
     }
 
 }
-
