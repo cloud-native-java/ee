@@ -4,6 +4,7 @@ import basics.template.TransactionTemplateApplication;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -20,6 +21,7 @@ import java.sql.PreparedStatement;
 
 
 @Configuration
+@ComponentScan
 @EnableTransactionManagement
 public class TransactionalApplication {
 
@@ -34,7 +36,7 @@ public class TransactionalApplication {
                 .setName("customers")
                 .build();
     }
-    
+
     @Bean
     JdbcTemplate jdbcTemplate(DataSource ds) {
         return new JdbcTemplate(ds);
@@ -44,12 +46,6 @@ public class TransactionalApplication {
     PlatformTransactionManager platformTransactionManager(
             DataSource ds) {
         return new DataSourceTransactionManager(ds);
-    }
-
-    @Bean
-    TransactionTemplate transactionTemplate(
-            PlatformTransactionManager txManager) {
-        return new TransactionTemplate(txManager);
     }
 
     @Bean

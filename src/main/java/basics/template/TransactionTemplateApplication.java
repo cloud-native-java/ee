@@ -3,6 +3,7 @@ package basics.template;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -15,6 +16,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.sql.DataSource;
 
 @Configuration
+@ComponentScan
 public class TransactionTemplateApplication {
 
     public static void main(String args[]) {
@@ -42,17 +44,6 @@ public class TransactionTemplateApplication {
     @Bean
     TransactionTemplate transactionTemplate(PlatformTransactionManager txManager) {
         return new TransactionTemplate(txManager);
-    }
-
-    @Bean
-    InitializingBean runner(RowMapper<Customer> customerRowMapper,
-                            CustomerService customerService, JdbcTemplate jdbcTemplate) {
-        return () -> {
-            jdbcTemplate.execute("create table CUSTOMER(ID serial, FIRST_NAME varchar, LAST_NAME varchar , ENABLED int(1))");
-            jdbcTemplate.update("insert into CUSTOMER( FIRST_NAME , LAST_NAME, ENABLED) VALUES ( ? , ?, ?)", "Dave", "Syer", false);
-            jdbcTemplate.query("select  * from CUSTOMER", customerRowMapper);
-            customerService.enableCustomer(1L);
-        };
     }
 
     @Bean
