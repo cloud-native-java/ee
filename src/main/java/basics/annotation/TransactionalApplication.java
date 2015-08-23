@@ -22,7 +22,7 @@ import java.sql.PreparedStatement;
 
 @Configuration
 @ComponentScan
-@EnableTransactionManagement
+@EnableTransactionManagement // <1>
 public class TransactionalApplication {
 
     public static void main(String args[]) {
@@ -46,18 +46,6 @@ public class TransactionalApplication {
     PlatformTransactionManager platformTransactionManager(
             DataSource ds) {
         return new DataSourceTransactionManager(ds);
-    }
-
-    @Bean
-    InitializingBean runner(RowMapper<Customer> customerRowMapper,
-                            CustomerService customerService, JdbcTemplate jdbcTemplate) {
-        return () -> {
-            jdbcTemplate.execute("create table CUSTOMER(ID serial, FIRST_NAME varchar, LAST_NAME varchar , ENABLED int(1))");
-            jdbcTemplate.update("insert into CUSTOMER( FIRST_NAME , LAST_NAME, ENABLED) VALUES ( ? , ?, ?)",
-                    "Dave", "Syer", false);
-            jdbcTemplate.query("select  * from CUSTOMER", customerRowMapper);
-            customerService.enableCustomer(1L);
-        };
     }
 
     @Bean

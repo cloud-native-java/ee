@@ -36,12 +36,12 @@ public class TransactionTemplateApplication {
         return new JdbcTemplate(ds);
     }
 
-    @Bean
+    @Bean // <1>
     PlatformTransactionManager platformTransactionManager(DataSource ds) {
         return new DataSourceTransactionManager(ds);
     }
 
-    @Bean
+    @Bean // <2>
     TransactionTemplate transactionTemplate(PlatformTransactionManager txManager) {
         return new TransactionTemplate(txManager);
     }

@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
@@ -26,14 +27,19 @@ public class CustomerService {
 
     public Customer enableCustomer(Long id) {
 
-        Customer customer = txTemplate.execute((TransactionStatus transactionStatus) -> {
+        TransactionCallback<Customer> customerTransactionCallback = // <1>
+                (TransactionStatus transactionStatus) -> {
 
-            String updateQuery = "update CUSTOMER set ENABLED = ? WHERE ID = ?";
-            jdbcTemplate.update(updateQuery, Boolean.TRUE, id);
+                    String updateQuery = "update CUSTOMER set ENABLED = ? WHERE ID = ?";
+                    jdbcTemplate.update(updateQuery, Boolean.TRUE, id);
 
-            String selectQuery = "select * from CUSTOMER where ID = ?";
-            return jdbcTemplate.queryForObject(selectQuery, customerRowMapper, id);
-        });
+                    String selectQuery = "select * from CUSTOMER where ID = ?";
+                    return jdbcTemplate.queryForObject(selectQuery, customerRowMapper, id);
+                };
+
+
+        // <2>
+        Customer customer = txTemplate.execute(customerTransactionCallback);
 
         LogFactory.getLog(getClass()).info("retrieved customer # " + customer.getId());
 
