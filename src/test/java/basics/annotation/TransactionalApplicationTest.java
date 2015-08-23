@@ -1,0 +1,41 @@
+package basics.annotation;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
+import static org.junit.Assert.*;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(classes = TransactionalApplication.class)
+public class TransactionalApplicationTest {
+
+    @Autowired
+    private RowMapper<Customer> customerRowMapper;
+
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Test
+    public void contextLoaded() throws Exception {
+        String enabledQuery = "select * from CUSTOMER where ENABLED=1";
+        assertEquals(jdbcTemplate.query(enabledQuery, customerRowMapper).size(), 0);
+        customerService.enableCustomer(1L);
+        assertEquals(jdbcTemplate.query(enabledQuery, customerRowMapper).size(), 1);
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        jdbcTemplate.execute("create table CUSTOMER(ID serial, FIRST_NAME varchar, LAST_NAME varchar , ENABLED int(1))");
+        jdbcTemplate.update("insert into CUSTOMER( FIRST_NAME , LAST_NAME, ENABLED) VALUES ( ? , ?, ?)", "Dave", "Syer", false);
+        jdbcTemplate.query("select  * from CUSTOMER", customerRowMapper);
+    }
+}
