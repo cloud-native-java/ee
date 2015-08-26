@@ -34,8 +34,6 @@ public class TransactionalApplicationTest {
 
     @Before
     public void setUp() throws Exception {
-        jdbcTemplate.execute("create table CUSTOMER(ID serial, FIRST_NAME varchar, LAST_NAME varchar , ENABLED int(1))");
-        jdbcTemplate.update("insert into CUSTOMER( FIRST_NAME , LAST_NAME, ENABLED) VALUES ( ? , ?, ?)", "Dave", "Syer", false);
-        jdbcTemplate.query("select  * from CUSTOMER", customerRowMapper);
+         jdbcTemplate.query("select  * from CUSTOMER", customerRowMapper);
     }
 }
