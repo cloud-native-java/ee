@@ -1,75 +1,69 @@
 package basics.template;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
+import basics.Customer;
+import basics.TransactionalConfiguration;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.SimpleDriverDataSource;
-import org.springframework.jdbc.datasource.init.DataSourceInitializer;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import javax.sql.DataSource;
 
 @Configuration
 @ComponentScan
+@Import(TransactionalConfiguration.class)
 public class TransactionTemplateApplication {
 
     public static void main(String args[]) {
         new AnnotationConfigApplicationContext(TransactionTemplateApplication.class);
     }
 
+    // <1>
     @Bean
-    DataSource dataSource() {
-        SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
-        dataSource.setUrl("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
-        dataSource.setDriverClass(org.h2.Driver.class);
-        dataSource.setUsername("sa");
-        dataSource.setPassword("");
-        return dataSource;
-    }
-
-    @Bean
-    DataSourceInitializer dataSourceInitializer(
-            DataSource ds,
-            @Value("classpath:/schema.sql") Resource schema,
-            @Value("classpath:/data.sql") Resource data) {
-        DataSourceInitializer init = new DataSourceInitializer();
-        init.setDatabasePopulator(new ResourceDatabasePopulator(schema, data));
-        init.setDataSource(ds);
-        return init;
-    }
-
-    @Bean
-    JdbcTemplate jdbcTemplate(DataSource ds) {
-        return new JdbcTemplate(ds);
-    }
-
-    @Bean
-        // <1>
-    PlatformTransactionManager platformTransactionManager(DataSource ds) {
-        return new DataSourceTransactionManager(ds);
-    }
-
-    @Bean
-        // <2>
     TransactionTemplate transactionTemplate(PlatformTransactionManager txManager) {
         return new TransactionTemplate(txManager);
     }
+}
 
-    @Bean
-    RowMapper<Customer> customerRowMapper() {
-        return (resultSet, i) ->
-                new Customer(
-                        resultSet.getLong("ID"),
-                        resultSet.getString("FIRST_NAME"),
-                        resultSet.getString("LAST_NAME"));
+@Service
+class CustomerService {
+
+    private JdbcTemplate jdbcTemplate;
+    private TransactionTemplate txTemplate;
+    private RowMapper<Customer> customerRowMapper;
+
+    @Autowired
+    public CustomerService(TransactionTemplate txTemplate,
+                           JdbcTemplate jdbcTemplate,
+                           RowMapper<Customer> customerRowMapper) {
+        this.txTemplate = txTemplate;
+        this.jdbcTemplate = jdbcTemplate;
+        this.customerRowMapper = customerRowMapper;
+    }
+
+    public Customer enableCustomer(Long id) {
+
+        // <2>
+        TransactionCallback<Customer> customerTransactionCallback = (TransactionStatus transactionStatus) -> {
+
+            String updateQuery = "update CUSTOMER set ENABLED = ? WHERE ID = ?";
+            jdbcTemplate.update(updateQuery, Boolean.TRUE, id);
+
+            String selectQuery = "select * from CUSTOMER where ID = ?";
+            return jdbcTemplate.queryForObject(selectQuery, customerRowMapper, id);
+        };
+
+
+        // <2>
+        Customer customer = txTemplate.execute(customerTransactionCallback);
+
+        LogFactory.getLog(getClass()).info("retrieved customer # " + customer.getId());
+
+        return customer;
     }
 
 }

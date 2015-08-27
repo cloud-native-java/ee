@@ -1,4 +1,4 @@
-package basics.annotation;
+package basics;
 
 
 public class Customer {

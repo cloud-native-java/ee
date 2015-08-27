@@ -1,5 +1,6 @@
 package basics.annotation;
 
+import basics.Customer;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,7 +10,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = TransactionalApplication.class)
@@ -34,6 +35,6 @@ public class TransactionalApplicationTest {
 
     @Before
     public void setUp() throws Exception {
-         jdbcTemplate.query("select  * from CUSTOMER", customerRowMapper);
+        jdbcTemplate.query("select  * from CUSTOMER", customerRowMapper);
     }
 }
