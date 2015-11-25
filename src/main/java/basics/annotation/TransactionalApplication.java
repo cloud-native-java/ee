@@ -44,7 +44,7 @@ class CustomerService {
     @javax.transaction.Transactional  // <4>
     public Customer enableCustomer(Long id) {
 
-        String updateQuery = "update CUSTOMER set ENABLED =  ? WHERE ID = ?";
+        String updateQuery = "update CUSTOMER set ENABLED = ? WHERE ID = ?";
         jdbcTemplate.update(updateQuery, Boolean.TRUE, id);
 
         String selectQuery = "select * from CUSTOMER where ID = ?";
