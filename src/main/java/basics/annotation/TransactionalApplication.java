@@ -14,43 +14,48 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-
 @Configuration
 @ComponentScan
 @Import(TransactionalConfiguration.class)
-@EnableTransactionManagement // <1>
+@EnableTransactionManagement
+// <1>
 public class TransactionalApplication {
 
-    public static void main(String args[]) {
-        new AnnotationConfigApplicationContext(TransactionTemplateApplication.class);
-    }
+	public static void main(String args[]) {
+		new AnnotationConfigApplicationContext(
+				TransactionTemplateApplication.class);
+	}
 }
 
 @Service
 class CustomerService {
 
-    private JdbcTemplate jdbcTemplate;
-    private RowMapper<Customer> customerRowMapper;
+	private JdbcTemplate jdbcTemplate;
+	private RowMapper<Customer> customerRowMapper;
 
-    @Autowired
-    public CustomerService(JdbcTemplate jdbcTemplate,
-                           RowMapper<Customer> customerRowMapper) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.customerRowMapper = customerRowMapper;
-    }
+	@Autowired
+	public CustomerService(JdbcTemplate jdbcTemplate,
+			RowMapper<Customer> customerRowMapper) {
+		this.jdbcTemplate = jdbcTemplate;
+		this.customerRowMapper = customerRowMapper;
+	}
 
-    // @org.springframework.transaction.annotation.Transactional <2>
-    // @javax.ejb.TransactionAttribute <3>
-    @javax.transaction.Transactional  // <4>
-    public Customer enableCustomer(Long id) {
+	// @org.springframework.transaction.annotation.Transactional
+	// <2>
+	// @javax.ejb.TransactionAttribute <3>
+	@javax.transaction.Transactional
+	// <4>
+	public Customer enableCustomer(Long id) {
 
-        String updateQuery = "update CUSTOMER set ENABLED = ? WHERE ID = ?";
-        jdbcTemplate.update(updateQuery, Boolean.TRUE, id);
+		String updateQuery = "update CUSTOMER set ENABLED = ? WHERE ID = ?";
+		jdbcTemplate.update(updateQuery, Boolean.TRUE, id);
 
-        String selectQuery = "select * from CUSTOMER where ID = ?";
-        Customer customer = jdbcTemplate.queryForObject(selectQuery, customerRowMapper, id);
+		String selectQuery = "select * from CUSTOMER where ID = ?";
+		Customer customer = jdbcTemplate.queryForObject(selectQuery,
+				customerRowMapper, id);
 
-        LogFactory.getLog(getClass()).info("retrieved customer # " + customer.getId());
-        return customer;
-    }
+		LogFactory.getLog(getClass()).info(
+				"retrieved customer # " + customer.getId());
+		return customer;
+	}
 }

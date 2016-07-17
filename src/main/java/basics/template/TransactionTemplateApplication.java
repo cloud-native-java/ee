@@ -18,52 +18,54 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Import(TransactionalConfiguration.class)
 public class TransactionTemplateApplication {
 
-    public static void main(String args[]) {
-        new AnnotationConfigApplicationContext(TransactionTemplateApplication.class);
-    }
+	public static void main(String args[]) {
+		new AnnotationConfigApplicationContext(
+				TransactionTemplateApplication.class);
+	}
 
-    // <1>
-    @Bean
-    TransactionTemplate transactionTemplate(PlatformTransactionManager txManager) {
-        return new TransactionTemplate(txManager);
-    }
+	// <1>
+	@Bean
+	TransactionTemplate transactionTemplate(PlatformTransactionManager txManager) {
+		return new TransactionTemplate(txManager);
+	}
 }
 
 @Service
 class CustomerService {
 
-    private JdbcTemplate jdbcTemplate;
-    private TransactionTemplate txTemplate;
-    private RowMapper<Customer> customerRowMapper;
+	private JdbcTemplate jdbcTemplate;
+	private TransactionTemplate txTemplate;
+	private RowMapper<Customer> customerRowMapper;
 
-    @Autowired
-    public CustomerService(TransactionTemplate txTemplate,
-                           JdbcTemplate jdbcTemplate,
-                           RowMapper<Customer> customerRowMapper) {
-        this.txTemplate = txTemplate;
-        this.jdbcTemplate = jdbcTemplate;
-        this.customerRowMapper = customerRowMapper;
-    }
+	@Autowired
+	public CustomerService(TransactionTemplate txTemplate,
+			JdbcTemplate jdbcTemplate, RowMapper<Customer> customerRowMapper) {
+		this.txTemplate = txTemplate;
+		this.jdbcTemplate = jdbcTemplate;
+		this.customerRowMapper = customerRowMapper;
+	}
 
-    public Customer enableCustomer(Long id) {
+	public Customer enableCustomer(Long id) {
 
-        // <2>
-        TransactionCallback<Customer> customerTransactionCallback = (TransactionStatus transactionStatus) -> {
+		// <2>
+		TransactionCallback<Customer> customerTransactionCallback = (
+				TransactionStatus transactionStatus) -> {
 
-            String updateQuery = "update CUSTOMER set ENABLED = ? WHERE ID = ?";
-            jdbcTemplate.update(updateQuery, Boolean.TRUE, id);
+			String updateQuery = "update CUSTOMER set ENABLED = ? WHERE ID = ?";
+			jdbcTemplate.update(updateQuery, Boolean.TRUE, id);
 
-            String selectQuery = "select * from CUSTOMER where ID = ?";
-            return jdbcTemplate.queryForObject(selectQuery, customerRowMapper, id);
-        };
+			String selectQuery = "select * from CUSTOMER where ID = ?";
+			return jdbcTemplate.queryForObject(selectQuery, customerRowMapper,
+					id);
+		};
 
+		// <2>
+		Customer customer = txTemplate.execute(customerTransactionCallback);
 
-        // <2>
-        Customer customer = txTemplate.execute(customerTransactionCallback);
+		LogFactory.getLog(getClass()).info(
+				"retrieved customer # " + customer.getId());
 
-        LogFactory.getLog(getClass()).info("retrieved customer # " + customer.getId());
-
-        return customer;
-    }
+		return customer;
+	}
 
 }
