@@ -48,8 +48,8 @@ public class TransactionalConfiguration {
 	// <4>
 	@Bean
 	RowMapper<Customer> customerRowMapper() {
-		return (resultSet, i) -> new Customer(resultSet.getLong("ID"),
-				resultSet.getString("FIRST_NAME"), resultSet.getString("LAST_NAME"));
+		return (rs, i) -> new Customer(rs.getLong("ID"), rs.getString("FIRST_NAME"),
+				rs.getString("LAST_NAME"));
 	}
 
 	// <5>
