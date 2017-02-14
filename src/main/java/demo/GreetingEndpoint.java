@@ -9,7 +9,7 @@ import javax.ws.rs.core.MediaType;
 // <1>
 @Path("/hello")
 // <2>
-@Produces({MediaType.APPLICATION_JSON})
+@Produces({ MediaType.APPLICATION_JSON })
 // <3>
 public class GreetingEndpoint {
 

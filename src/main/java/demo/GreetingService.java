@@ -35,8 +35,8 @@ public class GreetingService {
 
 	public Collection<Greeting> findAll() {
 		return this.entityManager.createQuery(
-				"select g from " + Greeting.class.getName() + " g",
-				Greeting.class).getResultList();
+				"select g from " + Greeting.class.getName() + " g", Greeting.class)
+				.getResultList();
 	}
 
 	public Greeting find(Long id) {

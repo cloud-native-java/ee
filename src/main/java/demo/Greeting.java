@@ -12,22 +12,21 @@ public class Greeting implements Serializable {
 	@Id
 	@GeneratedValue
 	private Long id;
-
-	@Override
-	public String toString() {
-		return "Greeting{" + "id=" + id + ", message='" + message + '\'' + '}';
-	}
-
 	private String message;
-
-	public String getMessage() {
-		return message;
-	}
 
 	public Greeting(String name) {
 		this.message = "Hi, " + name + "!";
 	}
 
 	Greeting() {
+	}
+
+	@Override
+	public String toString() {
+		return "Greeting{" + "id=" + id + ", message='" + message + '\'' + '}';
+	}
+
+	public String getMessage() {
+		return message;
 	}
 }

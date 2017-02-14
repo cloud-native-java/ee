@@ -19,8 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class TransactionTemplateApplication {
 
 	public static void main(String args[]) {
-		new AnnotationConfigApplicationContext(
-				TransactionTemplateApplication.class);
+		new AnnotationConfigApplicationContext(TransactionTemplateApplication.class);
 	}
 
 	// <1>
@@ -38,8 +37,8 @@ class CustomerService {
 	private RowMapper<Customer> customerRowMapper;
 
 	@Autowired
-	public CustomerService(TransactionTemplate txTemplate,
-			JdbcTemplate jdbcTemplate, RowMapper<Customer> customerRowMapper) {
+	public CustomerService(TransactionTemplate txTemplate, JdbcTemplate jdbcTemplate,
+			RowMapper<Customer> customerRowMapper) {
 		this.txTemplate = txTemplate;
 		this.jdbcTemplate = jdbcTemplate;
 		this.customerRowMapper = customerRowMapper;
@@ -55,15 +54,13 @@ class CustomerService {
 			jdbcTemplate.update(updateQuery, Boolean.TRUE, id);
 
 			String selectQuery = "select * from CUSTOMER where ID = ?";
-			return jdbcTemplate.queryForObject(selectQuery, customerRowMapper,
-					id);
+			return jdbcTemplate.queryForObject(selectQuery, customerRowMapper, id);
 		};
 
 		// <2>
 		Customer customer = txTemplate.execute(customerTransactionCallback);
 
-		LogFactory.getLog(getClass()).info(
-				"retrieved customer # " + customer.getId());
+		LogFactory.getLog(getClass()).info("retrieved customer # " + customer.getId());
 
 		return customer;
 	}

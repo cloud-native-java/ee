@@ -22,8 +22,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 public class TransactionalApplication {
 
 	public static void main(String args[]) {
-		new AnnotationConfigApplicationContext(
-				TransactionTemplateApplication.class);
+		new AnnotationConfigApplicationContext(TransactionTemplateApplication.class);
 	}
 }
 
@@ -34,8 +33,7 @@ class CustomerService {
 	private RowMapper<Customer> customerRowMapper;
 
 	@Autowired
-	public CustomerService(JdbcTemplate jdbcTemplate,
-			RowMapper<Customer> customerRowMapper) {
+	public CustomerService(JdbcTemplate jdbcTemplate, RowMapper<Customer> customerRowMapper) {
 		this.jdbcTemplate = jdbcTemplate;
 		this.customerRowMapper = customerRowMapper;
 	}
@@ -51,11 +49,9 @@ class CustomerService {
 		jdbcTemplate.update(updateQuery, Boolean.TRUE, id);
 
 		String selectQuery = "select * from CUSTOMER where ID = ?";
-		Customer customer = jdbcTemplate.queryForObject(selectQuery,
-				customerRowMapper, id);
+		Customer customer = jdbcTemplate.queryForObject(selectQuery, customerRowMapper, id);
 
-		LogFactory.getLog(getClass()).info(
-				"retrieved customer # " + customer.getId());
+		LogFactory.getLog(getClass()).info("retrieved customer # " + customer.getId());
 		return customer;
 	}
 }

@@ -21,8 +21,7 @@ public class TransactionalConfiguration {
 	@Bean
 	DataSource dataSource() {
 		SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
-		dataSource
-				.setUrl("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
+		dataSource.setUrl("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
 		dataSource.setDriverClass(org.h2.Driver.class);
 		dataSource.setUsername("sa");
 		dataSource.setPassword("");
@@ -50,8 +49,7 @@ public class TransactionalConfiguration {
 	@Bean
 	RowMapper<Customer> customerRowMapper() {
 		return (resultSet, i) -> new Customer(resultSet.getLong("ID"),
-				resultSet.getString("FIRST_NAME"),
-				resultSet.getString("LAST_NAME"));
+				resultSet.getString("FIRST_NAME"), resultSet.getString("LAST_NAME"));
 	}
 
 	// <5>

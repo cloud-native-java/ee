@@ -28,11 +28,9 @@ public class TransactionTemplateApplicationTest {
 	@Test
 	public void contextLoaded() throws Exception {
 		String enabledQuery = "select * from CUSTOMER where ENABLED=1";
-		assertEquals(
-				jdbcTemplate.query(enabledQuery, customerRowMapper).size(), 0);
+		assertEquals(jdbcTemplate.query(enabledQuery, customerRowMapper).size(), 0);
 		customerService.enableCustomer(1L);
-		assertEquals(
-				jdbcTemplate.query(enabledQuery, customerRowMapper).size(), 1);
+		assertEquals(jdbcTemplate.query(enabledQuery, customerRowMapper).size(), 1);
 	}
 
 	@Before

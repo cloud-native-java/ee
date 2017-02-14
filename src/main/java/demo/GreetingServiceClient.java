@@ -18,9 +18,9 @@ public class GreetingServiceClient {
 		greetingService.createGreeting("Dave");
 		try {
 			greetingService.createGreeting("Josh", true);
-		} catch (RuntimeException re) {
-			Logger.getLogger(Application.class.getName()).info(
-					"caught exception...");
+		}
+		catch (RuntimeException re) {
+			Logger.getLogger(Application.class.getName()).info("caught exception...");
 		}
 		greetingService.findAll().forEach(System.out::println);
 	}
