@@ -13,18 +13,18 @@ import javax.ws.rs.core.MediaType;
 // <3>
 public class GreetingEndpoint {
 
-	@Inject
-	private GreetingService greetingService;
+ @Inject
+ private GreetingService greetingService;
 
-	@POST
-	// <4>
-	public void post(@QueryParam("name") String name) { // <5>
-		this.greetingService.createGreeting(name);
-	}
+ @POST
+ // <4>
+ public void post(@QueryParam("name") String name) { // <5>
+  this.greetingService.createGreeting(name);
+ }
 
-	@GET
-	@Path("/{id}")
-	public Greeting get(@PathParam("id") Long id) {
-		return this.greetingService.find(id);
-	}
+ @GET
+ @Path("/{id}")
+ public Greeting get(@PathParam("id") Long id) {
+  return this.greetingService.find(id);
+ }
 }

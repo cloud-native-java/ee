@@ -9,8 +9,8 @@ import javax.inject.Named;
 // <1>
 public class JerseyConfig extends ResourceConfig {
 
-	public JerseyConfig() {
-		this.register(GreetingEndpoint.class); // <2>
-		this.register(JacksonFeature.class); // <3>
-	}
+ public JerseyConfig() {
+  this.register(GreetingEndpoint.class); // <2>
+  this.register(JacksonFeature.class); // <3>
+ }
 }

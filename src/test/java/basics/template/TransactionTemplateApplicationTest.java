@@ -16,25 +16,25 @@ import static org.junit.Assert.assertEquals;
 @ContextConfiguration(classes = TransactionTemplateApplication.class)
 public class TransactionTemplateApplicationTest {
 
-	@Autowired
-	private RowMapper<Customer> customerRowMapper;
+ @Autowired
+ private RowMapper<Customer> customerRowMapper;
 
-	@Autowired
-	private CustomerService customerService;
+ @Autowired
+ private CustomerService customerService;
 
-	@Autowired
-	private JdbcTemplate jdbcTemplate;
+ @Autowired
+ private JdbcTemplate jdbcTemplate;
 
-	@Test
-	public void contextLoaded() throws Exception {
-		String enabledQuery = "select * from CUSTOMER where ENABLED=1";
-		assertEquals(jdbcTemplate.query(enabledQuery, customerRowMapper).size(), 0);
-		customerService.enableCustomer(1L);
-		assertEquals(jdbcTemplate.query(enabledQuery, customerRowMapper).size(), 1);
-	}
+ @Test
+ public void contextLoaded() throws Exception {
+  String enabledQuery = "select * from CUSTOMER where ENABLED=1";
+  assertEquals(jdbcTemplate.query(enabledQuery, customerRowMapper).size(), 0);
+  customerService.enableCustomer(1L);
+  assertEquals(jdbcTemplate.query(enabledQuery, customerRowMapper).size(), 1);
+ }
 
-	@Before
-	public void setUp() throws Exception {
-		jdbcTemplate.query("select  * from CUSTOMER", customerRowMapper);
-	}
+ @Before
+ public void setUp() throws Exception {
+  jdbcTemplate.query("select  * from CUSTOMER", customerRowMapper);
+ }
 }

@@ -11,10 +11,10 @@ import javax.jms.JMSException;
 @Named
 public class GreetingMessageProcessor {
 
-	private Log log = LogFactory.getLog(getClass());
+ private Log log = LogFactory.getLog(getClass());
 
-	@JmsListener(destination = "greetings")
-	public void processGreeting(Greeting greeting) throws JMSException {
-		log.info("received message: " + greeting);
-	}
+ @JmsListener(destination = "greetings")
+ public void processGreeting(Greeting greeting) throws JMSException {
+  log.info("received message: " + greeting);
+ }
 }
