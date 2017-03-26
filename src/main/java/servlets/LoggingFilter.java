@@ -6,11 +6,6 @@ import org.apache.commons.logging.LogFactory;
 import javax.servlet.*;
 import java.io.IOException;
 
-/**
- * @author <a
- * href="mailto:josh@joshlong.com">Josh
- * Long</a>
- */
 class LoggingFilter implements Filter {
 
  private final Log log = LogFactory.getLog(getClass());

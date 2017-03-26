@@ -10,11 +10,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- * @author <a
- * href="mailto:josh@joshlong.com">Josh
- * Long</a>
- */
 @WebServlet("/hi/servlets")
 class DemoServlet extends HttpServlet {
 
