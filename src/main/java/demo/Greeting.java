@@ -12,6 +12,7 @@ public class Greeting implements Serializable {
  @Id
  @GeneratedValue
  private Long id;
+
  private String message;
 
  public Greeting(String name) {

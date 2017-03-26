@@ -1,7 +1,9 @@
 package basics;
 
 public class Customer {
+
  private Long id;
+
  private String firstName, lastName;
 
  public Customer(Long id, String firstName, String lastName) {

@@ -33,12 +33,14 @@ public class TransactionTemplateApplication {
 class CustomerService {
 
  private JdbcTemplate jdbcTemplate;
+
  private TransactionTemplate txTemplate;
+
  private RowMapper<Customer> customerRowMapper;
 
  @Autowired
- public CustomerService(TransactionTemplate txTemplate, JdbcTemplate jdbcTemplate,
-   RowMapper<Customer> customerRowMapper) {
+ public CustomerService(TransactionTemplate txTemplate,
+  JdbcTemplate jdbcTemplate, RowMapper<Customer> customerRowMapper) {
   this.txTemplate = txTemplate;
   this.jdbcTemplate = jdbcTemplate;
   this.customerRowMapper = customerRowMapper;
@@ -48,7 +50,7 @@ class CustomerService {
 
   // <2>
   TransactionCallback<Customer> customerTransactionCallback = (
-    TransactionStatus transactionStatus) -> {
+   TransactionStatus transactionStatus) -> {
 
    String updateQuery = "update CUSTOMER set ENABLED = ? WHERE ID = ?";
    jdbcTemplate.update(updateQuery, Boolean.TRUE, id);
@@ -60,7 +62,8 @@ class CustomerService {
   // <2>
   Customer customer = txTemplate.execute(customerTransactionCallback);
 
-  LogFactory.getLog(getClass()).info("retrieved customer # " + customer.getId());
+  LogFactory.getLog(getClass())
+   .info("retrieved customer # " + customer.getId());
 
   return customer;
  }
