@@ -4,12 +4,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-//@WebServlet(urlPatterns = "/web-servlets")
+// <1>
+@WebServlet(urlPatterns = "/servlets/hi", asyncSupported = false)
 class GreetingsServlet extends HttpServlet {
 
  private final Log log = LogFactory.getLog(getClass());

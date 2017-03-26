@@ -12,9 +12,9 @@ class LoggingFilter implements Filter {
  private final Log log = LogFactory.getLog(getClass());
 
  @Override
- public void init(FilterConfig filterConfig) throws ServletException {
+ public void init(FilterConfig config) throws ServletException {
   this.log.info("init()");
-  String initParameter = filterConfig.getInitParameter("instant-initialized");
+  String initParameter = config.getInitParameter("instant-initialized");
   Instant initializationInstant = Instant.parse(initParameter);
   this.log.info(Instant.class.getName() + " initialized "
    + initializationInstant.toString());
