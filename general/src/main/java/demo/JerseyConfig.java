@@ -5,8 +5,8 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 import javax.inject.Named;
 
-@Named
 // <1>
+@Named
 public class JerseyConfig extends ResourceConfig {
 
  public JerseyConfig() {

@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 
 import javax.servlet.*;
 import java.io.IOException;
+import java.time.Instant;
 
 class LoggingFilter implements Filter {
 
@@ -13,6 +14,10 @@ class LoggingFilter implements Filter {
  @Override
  public void init(FilterConfig filterConfig) throws ServletException {
   this.log.info("init()");
+  String initParameter = filterConfig.getInitParameter("instant-initialized");
+  Instant initializationInstant = Instant.parse(initParameter);
+  this.log.info(Instant.class.getName() + " initialized "
+   + initializationInstant.toString());
  }
 
  @Override
