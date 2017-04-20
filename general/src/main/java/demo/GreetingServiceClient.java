@@ -11,8 +11,8 @@ public class GreetingServiceClient {
  @Inject
  private GreetingService greetingService;
 
- @PostConstruct
  // <1>
+ @PostConstruct
  public void afterPropertiesSet() throws Exception {
   greetingService.createGreeting("Phil");
   greetingService.createGreeting("Dave");

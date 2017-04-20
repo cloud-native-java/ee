@@ -5,8 +5,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.io.Serializable;
 
-@Entity
-// <1>
+@Entity // <1>
 public class Greeting implements Serializable {
 
  @Id
