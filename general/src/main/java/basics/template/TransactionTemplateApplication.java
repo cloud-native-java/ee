@@ -59,7 +59,7 @@ class CustomerService {
    return jdbcTemplate.queryForObject(selectQuery, customerRowMapper, id);
   };
 
-  // <2>
+  // <3>
   Customer customer = txTemplate.execute(customerTransactionCallback);
 
   LogFactory.getLog(getClass())
