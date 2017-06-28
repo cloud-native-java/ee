@@ -34,7 +34,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   // <2>
   if (UndertowEmbeddedServletContainerFactory.class.isAssignableFrom(c
    .getClass())) {
-   UndertowEmbeddedServletContainerFactory undertow = UndertowEmbeddedServletContainerFactory.class
+   UndertowEmbeddedServletContainerFactory undertow = UndertowEmbeddedServlet<?pdf-cr?>ContainerFactory.class
     .cast(c);
    undertow.getDeploymentInfoCustomizers().forEach(
     dic -> log.info("undertow deployment info customizer " + dic));
@@ -45,7 +45,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   // <3>
   if (TomcatEmbeddedServletContainerFactory.class
    .isAssignableFrom(c.getClass())) {
-   TomcatEmbeddedServletContainerFactory tomcat = TomcatEmbeddedServletContainerFactory.class
+   TomcatEmbeddedServletContainerFactory tomcat = TomcatEmbeddedServletContainer<?pdf-cr?>Factory.class
     .cast(c);
    tomcat.getTomcatConnectorCustomizers().forEach(
     cc -> log.info("tomcat connector customizer " + cc));
@@ -55,7 +55,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
 
   // <4>
   if (JettyEmbeddedServletContainerFactory.class.isAssignableFrom(c.getClass())) {
-   JettyEmbeddedServletContainerFactory jetty = JettyEmbeddedServletContainerFactory.class
+   JettyEmbeddedServletContainerFactory jetty = JettyEmbeddedServletContainer<?pdf-cr?>Factory.class
     .cast(c);
    jetty.getServerCustomizers().forEach(
     cc -> log.info("jetty server customizer " + cc));
