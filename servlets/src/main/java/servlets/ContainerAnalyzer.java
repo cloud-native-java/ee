@@ -3,15 +3,15 @@ package servlets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 //@formatter:off
-import org.springframework.boot.context.embedded.AbstractEmbeddedServletContainerFactory;
-import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletContainer;
+import org.springframework.boot.context.embedded.AbstractEmbeddedServletContainer<?pdf-cr?>Factory;
+import org.springframework.boot.context.embedded.ConfigurableEmbeddedServlet<?pdf-cr?>Container;
 import org.springframework.boot.context.embedded
         .EmbeddedServletContainerCustomizer;
 import org.springframework.boot.context.embedded
         .jetty.JettyEmbeddedServletContainerFactory;
 import org.springframework.boot.context.embedded
         .tomcat.TomcatEmbeddedServletContainerFactory;
-import org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServletContainerFactory;
+import org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServlet<?pdf-cr?>ContainerFactory;
 //@formatter:on
 import org.springframework.stereotype.Component;
 
@@ -26,7 +26,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   this.log.info("inside " + getClass().getName());
 
   // <1>
-  AbstractEmbeddedServletContainerFactory base = AbstractEmbeddedServletContainerFactory.class
+  AbstractEmbeddedServletContainerFactory base = AbstractEmbeddedServletContainer<?pdf-cr?>Factory.class
    .cast(c);
   this.log.info("the container's running on port " + base.getPort());
   this.log.info("the container's context-path is " + base.getContextPath());
