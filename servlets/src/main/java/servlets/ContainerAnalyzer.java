@@ -29,7 +29,8 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   this.log.info("inside " + getClass().getName());
 
   // <1>
-  AbstractEmbeddedServletContainerFactory base = AbstractEmbeddedServletContainer<?pdf-cr?>Factory.class
+  AbstractEmbeddedServletContainerFactory base = 
+  AbstractEmbeddedServletContainer<?pdf-cr?>Factory.class
    .cast(c);
   this.log.info("the container's running on port " + base.getPort());
   this.log.info("the container's context-path is " + base.getContextPath());
@@ -37,7 +38,8 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   // <2>
   if (UndertowEmbeddedServletContainerFactory.class.isAssignableFrom(c
    .getClass())) {
-   UndertowEmbeddedServletContainerFactory undertow = UndertowEmbeddedServlet<?pdf-cr?>ContainerFactory.class
+   UndertowEmbeddedServletContainerFactory undertow = 
+   UndertowEmbeddedServlet<?pdf-cr?>ContainerFactory.class
     .cast(c);
    undertow.getDeploymentInfoCustomizers().forEach(
     dic -> log.info("undertow deployment info customizer " + dic));
