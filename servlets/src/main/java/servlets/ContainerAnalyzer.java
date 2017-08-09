@@ -8,8 +8,8 @@ import
 import 
     org.springframework.boot.context.embedded.ConfigurableEmbeddedServletpass:[<?pdf-cr?>]Container;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerpass:[<?pdf-cr?>]Customizer;
-import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerpass:[<?pdf-cr?>]Factory;
-import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerpass:[<?pdf-cr?>]Factory;
+import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletpass:[<?pdf-cr?>]ContainerFactory;
+import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletpass:[<?pdf-cr?>]ContainerFactory;
 import 
     org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServletpass:[<?pdf-cr?>]ContainerFactory;
 //@formatter:on
