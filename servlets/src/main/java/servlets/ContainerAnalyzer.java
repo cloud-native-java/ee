@@ -4,20 +4,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 //@formatter:off
 import 
-    org.springframework.boot.context.embedded.AbstractEmbeddedServletContainer
-    Factory;
+    org.springframework.boot.context.embedded.AbstractEmbeddedServletContainerpass:[<?pdf-cr?>]Factory;
 import 
-    org.springframework.boot.context.embedded.ConfigurableEmbeddedServlet
-    Container;
-import org.springframework.boot.context.embedded
-        .EmbeddedServletContainerCustomizer;
-import org.springframework.boot.context.embedded
-        .jetty.JettyEmbeddedServletContainerFactory;
-import org.springframework.boot.context.embedded
-        .tomcat.TomcatEmbeddedServletContainerFactory;
+    org.springframework.boot.context.embedded.ConfigurableEmbeddedServletpass:[<?pdf-cr?>]Container;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerpass:[<?pdf-cr?>]Customizer;
+import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerpass:[<?pdf-cr?>]Factory;
+import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletContainerpass:[<?pdf-cr?>]Factory;
 import 
-    org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServlet
-    ContainerFactory;
+    org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServletpass:[<?pdf-cr?>]ContainerFactory;
 //@formatter:on
 import org.springframework.stereotype.Component;
 
