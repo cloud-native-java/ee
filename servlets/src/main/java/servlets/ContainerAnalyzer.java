@@ -45,7 +45,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   // <3>
   if (TomcatEmbeddedServletContainerFactory.class
    .isAssignableFrom(c.getClass())) {
-   TomcatEmbeddedServletContainerFactory tomcat = TomcatEmbeddedServletContainerpass:[<?pdf-cr?>]Factory.class
+   TomcatEmbeddedServletContainerFactory tomcat = TomcatEmbeddedServletpass:[<?pdf-cr?>]ContainerFactory.class
     .cast(c);
    tomcat.getTomcatConnectorCustomizers().forEach(
     cc -> log.info("tomcat connector customizer " + cc));
