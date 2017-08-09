@@ -26,9 +26,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   this.log.info("inside " + getClass().getName());
 
   // <1>
-  AbstractEmbeddedServletContainerFactory base = 
-  AbstractEmbeddedServletContainer
-  Factory.class
+  AbstractEmbeddedServletContainerFactory base = AbstractEmbeddedServletContainerpass:[<?pdf-cr?>]Factory.class
    .cast(c);
   this.log.info("the container's running on port " + base.getPort());
   this.log.info("the container's context-path is " + base.getContextPath());
@@ -36,9 +34,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   // <2>
   if (UndertowEmbeddedServletContainerFactory.class.isAssignableFrom(c
    .getClass())) {
-   UndertowEmbeddedServletContainerFactory undertow = 
-   UndertowEmbeddedServlet
-   ContainerFactory.class
+   UndertowEmbeddedServletContainerFactory undertow = UndertowEmbeddedServletpass:[<?pdf-cr?>]ContainerFactory.class
     .cast(c);
    undertow.getDeploymentInfoCustomizers().forEach(
     dic -> log.info("undertow deployment info customizer " + dic));
@@ -49,8 +45,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   // <3>
   if (TomcatEmbeddedServletContainerFactory.class
    .isAssignableFrom(c.getClass())) {
-   TomcatEmbeddedServletContainerFactory tomcat = TomcatEmbeddedServletContainer
-   Factory.class
+   TomcatEmbeddedServletContainerFactory tomcat = TomcatEmbeddedServletContainerpass:[<?pdf-cr?>]Factory.class
     .cast(c);
    tomcat.getTomcatConnectorCustomizers().forEach(
     cc -> log.info("tomcat connector customizer " + cc));
@@ -60,8 +55,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
 
   // <4>
   if (JettyEmbeddedServletContainerFactory.class.isAssignableFrom(c.getClass())) {
-   JettyEmbeddedServletContainerFactory jetty = JettyEmbeddedServletContainer
-   Factory.class
+   JettyEmbeddedServletContainerFactory jetty = JettyEmbeddedServletContainerpass:[<?pdf-cr?>]Factory.class
     .cast(c);
    jetty.getServerCustomizers().forEach(
     cc -> log.info("jetty server customizer " + cc));
