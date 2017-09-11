@@ -3,15 +3,15 @@ package servlets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 //@formatter:off
-import 
-    org.springframework.boot.context.embedded.AbstractEmbeddedServletContainerpass:[<?pdf-cr?>]Factory;
-import 
-    org.springframework.boot.context.embedded.ConfigurableEmbeddedServletpass:[<?pdf-cr?>]Container;
-import org.springframework.boot.context.embedded.EmbeddedServletContainerpass:[<?pdf-cr?>]Customizer;
-import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletpass:[<?pdf-cr?>]ContainerFactory;
-import org.springframework.boot.context.embedded.tomcat.TomcatEmbeddedServletpass:[<?pdf-cr?>]ContainerFactory;
-import 
-    org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServletpass:[<?pdf-cr?>]ContainerFactory;
+import org.springframework.boot.context.embedded.AbstractEmbeddedServletContainerFactory;
+import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletContainer;
+import org.springframework.boot.context.embedded
+        .EmbeddedServletContainerCustomizer;
+import org.springframework.boot.context.embedded
+        .jetty.JettyEmbeddedServletContainerFactory;
+import org.springframework.boot.context.embedded
+        .tomcat.TomcatEmbeddedServletContainerFactory;
+import org.springframework.boot.context.embedded.undertow.UndertowEmbeddedServletContainerFactory;
 //@formatter:on
 import org.springframework.stereotype.Component;
 
@@ -26,7 +26,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   this.log.info("inside " + getClass().getName());
 
   // <1>
-  AbstractEmbeddedServletContainerFactory base = AbstractEmbeddedServletContainerpass:[<?pdf-cr?>]Factory.class
+  AbstractEmbeddedServletContainerFactory base = AbstractEmbeddedServletContainerFactory.class
    .cast(c);
   this.log.info("the container's running on port " + base.getPort());
   this.log.info("the container's context-path is " + base.getContextPath());
@@ -34,7 +34,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   // <2>
   if (UndertowEmbeddedServletContainerFactory.class.isAssignableFrom(c
    .getClass())) {
-   UndertowEmbeddedServletContainerFactory undertow = UndertowEmbeddedServletpass:[<?pdf-cr?>]ContainerFactory.class
+   UndertowEmbeddedServletContainerFactory undertow = UndertowEmbeddedServletContainerFactory.class
     .cast(c);
    undertow.getDeploymentInfoCustomizers().forEach(
     dic -> log.info("undertow deployment info customizer " + dic));
@@ -45,7 +45,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
   // <3>
   if (TomcatEmbeddedServletContainerFactory.class
    .isAssignableFrom(c.getClass())) {
-   TomcatEmbeddedServletContainerFactory tomcat = TomcatEmbeddedServletpass:[<?pdf-cr?>]ContainerFactory.class
+   TomcatEmbeddedServletContainerFactory tomcat = TomcatEmbeddedServletContainerFactory.class
     .cast(c);
    tomcat.getTomcatConnectorCustomizers().forEach(
     cc -> log.info("tomcat connector customizer " + cc));
@@ -55,7 +55,7 @@ class ContainerAnalyzer implements EmbeddedServletContainerCustomizer {
 
   // <4>
   if (JettyEmbeddedServletContainerFactory.class.isAssignableFrom(c.getClass())) {
-   JettyEmbeddedServletContainerFactory jetty = JettyEmbeddedServletContainerpass:[<?pdf-cr?>]Factory.class
+   JettyEmbeddedServletContainerFactory jetty = JettyEmbeddedServletContainerFactory.class
     .cast(c);
    jetty.getServerCustomizers().forEach(
     cc -> log.info("jetty server customizer " + cc));
